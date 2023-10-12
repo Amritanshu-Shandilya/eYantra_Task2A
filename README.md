@@ -13,6 +13,7 @@ On getting error like pip3 not found :
 ```sudo apt install python3-pip```
 
 ### Steps to run the program
+Clone the repository, `cd` into it and write these commands :
 ```
 colcon build
 source install/setup.bash
