@@ -19,4 +19,4 @@ source install/setup.bash
 ros2 launch hb_task2a task2a.launch.py
 ```
 You should see a Gazebo window looking like this :
-![Starting screen](~/gazebo.png)
+![Starting screen](/gazebo.png)
