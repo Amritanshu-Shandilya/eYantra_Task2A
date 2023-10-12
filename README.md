@@ -2,7 +2,7 @@
 Submisson for Task 2A of eYantra Robotic Competition
 
 ### Problem Statement
-![EYantra Themebook Page](https://portal.e-yantra.org/themeBook/hb/Task_2/task_2a_prob_statement.html)
+[EYantra Themebook Page](https://portal.e-yantra.org/themeBook/hb/Task_2/task_2a_prob_statement.html)
 
 #### Install the dependencies
 ```
@@ -18,3 +18,5 @@ colcon build
 source install/setup.bash
 ros2 launch hb_task2a task2a.launch.py
 ```
+You should see a Gazebo window looking like this :
+![Starting screen](https://portal.e-yantra.org/themeBook/hb/Task_2/images/gazebo.png)
