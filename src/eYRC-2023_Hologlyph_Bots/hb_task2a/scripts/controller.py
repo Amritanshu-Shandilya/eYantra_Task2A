@@ -30,14 +30,18 @@
 
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Twist
-from nav_msgs.msg import Odometry
 import time
 import math
 from tf_transformations import euler_from_quaternion
-from my_robot_interfaces.srv import NextGoal             
+from my_robot_interfaces.srv import NextGoal  
+from geometry_msgs.msg import Wrench
+from geometry_msgs.msg import Pose2D 
 
-# You can add more if required
+
+# NOTE: You are strictly NOT-ALLOWED to use "cmd_vel" or "odom" topics in this task
+# from geometry_msgs.msg import Twist
+#from nav_msgs.msg import Odometry
+           
 ##############################################################
 
 
@@ -54,33 +58,42 @@ class HBController(Node):
     def __init__(self):
         super().__init__('hb_controller')
         
-        # Initialze Publisher and Subscriber
-        # NOTE: You are strictly NOT-ALLOWED to use "cmd_vel" or "odom" topics in this task
+        # Initialze Subscriber
+        self.aruco_subscriber = self.create_subscription(Pose2D,'/detect_aruco',self.aruco_detect_callback, 1)
+
 	    #	Use the below given topics to generate motion for the robot.
         #   /hb_bot_1/left_wheel_force,
 	    #   /hb_bot_1/right_wheel_force,
-	    #   /hb_bot_1/left_wheel_force
+	    #   /hb_bot_1/rear_wheel_force
 
 
         #Left_wheel
-        self.v1_publisher = self.create_publisher(Twist,'/hb_bot_1/left_wheel_force',)
+        self.v1_publisher = self.create_publisher(Wrench,'/hb_bot_1/left_wheel_force',1)
         #Right_wheel
-        self.v2_publisher = self.create_publisher(Twist,'/hb_bot_1/right_wheel_force',)
-        #Left_wheel
-        self.v3_publisher = self.create_publisher(Twist,'/hb_bot_1/left_wheel_force',)
+        self.v2_publisher = self.create_publisher(Wrench,'/hb_bot_1/right_wheel_force',1)
+        #Rear_wheel
+        self.v3_publisher = self.create_publisher(Wrench,'/hb_bot_1/rear_wheel_force',1)
 
 
-
+        # Variable to hold bot's current position
+        self.hb_x = 0.
+        self.hb_y = 0.
+        self.hb_theta = 0.
 
         # For maintaining control loop rate.
         self.rate = self.create_rate(100)
 
+        
+        self.Kp = 1
 
         # client for the "next_goal" service
         self.cli = self.create_client(NextGoal, 'next_goal')      
         self.req = NextGoal.Request() 
         self.index = 0
 
+
+    def aruco_detect_callback():
+        pass
     
     # Method to create a request to the "next_goal" service
     def send_request(self, request_goal):
@@ -106,7 +119,7 @@ def main(args=None):
     # Create an instance of the HBController class
     hb_controller = HBController()
    
-    # Send an initial request with the index from ebot_controller.index
+    # Send an initial request with the index from HBController.index
     hb_controller.send_request(hb_controller.index)
     
     # Main loop
@@ -128,7 +141,23 @@ def main(args=None):
                 hb_controller.flag = response.end_of_list
                 ####################################################
                 
+                # <NEED TO VERIFY THIS>
                 # Calculate Error from feedback
+                error_x = x_goal - HBController.hb_x
+                error_y = y_goal - HBController.hb_y
+                error_theta = theta_goal - HBController.hb_theta
+
+                bot_real_theeta = -HBController.hb_theta         # the theeta in Odometry is inverse in gobal scope
+
+                    # Finally use the error and orientation of the bot and calculate the x and y velocity
+                    # using coordinate transformation and apply the k controller rate
+                v_x = HBController.Kp * (error_x * math.cos(bot_real_theeta) - error_y * math.sin(bot_real_theeta))
+                v_y = HBController.Kp * (error_x * math.sin(bot_real_theeta) + error_y * math.cos(bot_real_theeta))
+
+                    # extra 0.5 k controller rate for faster angular movement
+                w = (HBController.Kp + 0.5) * error_theta 
+
+
 
                 # Change the frame by using Rotation Matrix (If you find it required)
 
