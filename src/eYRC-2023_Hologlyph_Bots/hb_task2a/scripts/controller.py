@@ -18,8 +18,8 @@
 '''
 
 
-# Team ID:		[ Team-ID ]
-# Author List:		[ Names of team members worked on this file separated by Comma: Name1, Name2, ... ]
+# Team ID:		2883
+# Author List:	Anurag,, Amritanshu, Saumitra, Ansh
 # Filename:		feedback.py
 # Functions:
 #			[ Comma separated list of functions in this file ]
@@ -57,9 +57,17 @@ class HBController(Node):
         # Initialze Publisher and Subscriber
         # NOTE: You are strictly NOT-ALLOWED to use "cmd_vel" or "odom" topics in this task
 	    #	Use the below given topics to generate motion for the robot.
-	    #   /hb_bot_1/left_wheel_force,
+        #   /hb_bot_1/left_wheel_force,
 	    #   /hb_bot_1/right_wheel_force,
 	    #   /hb_bot_1/left_wheel_force
+
+
+        #Left_wheel
+        self.v1_publisher = self.create_publisher(Twist,'/hb_bot_1/left_wheel_force',)
+        #Right_wheel
+        self.v2_publisher = self.create_publisher(Twist,'/hb_bot_1/right_wheel_force',)
+        #Left_wheel
+        self.v3_publisher = self.create_publisher(Twist,'/hb_bot_1/left_wheel_force',)
 
 
 
