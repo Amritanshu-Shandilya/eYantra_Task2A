@@ -20,4 +20,13 @@ source install/setup.bash
 ros2 launch hb_task2a task2a.launch.py
 ```
 You should see a Gazebo window looking like this :
-![Starting screen](/gazebo.png)
+![Starting screen](img/gazebo.png)
+
+## Run the feedback script
+```
+cd src/eYRC-2023_Hologlyph_Bots/hb_task2a/scripts
+python3 feedback.py
+```
+You should see a opencv window with aruco marker detected
+![Starting screen](img/aruco.png)
+
