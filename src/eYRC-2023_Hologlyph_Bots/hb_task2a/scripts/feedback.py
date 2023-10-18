@@ -82,13 +82,15 @@ class ArUcoDetector(Node):
             corner = corner[0]
             diag_intersection = marker_center_diag_intersection(corner)
             avg_intersection = marker_center_coord_avg(corner)
+            int_center = (int(avg_intersection[0]), int(avg_intersection[1]))
+            cv_image = cv2.circle(cv_image, int_center, radius=3, color=(154, 54, 179), thickness=-1)
             print(id[0], diag_intersection, avg_intersection)
         print()
 
         # Display the image with aruco marers using OpenCV
         image_with_markers = cv2.aruco.drawDetectedMarkers(cv_image, corners, ids)
-        # cv2.imshow('Camera Image', image_with_markers)
-        # cv2.waitKey(1)
+        cv2.imshow('Camera Image', image_with_markers)
+        cv2.waitKey(1)
 
         # Publish the bot coordinates to the topic  /detected_aruco
         # control_pose = Pose2D()
