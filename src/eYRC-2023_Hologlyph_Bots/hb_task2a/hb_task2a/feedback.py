@@ -28,9 +28,25 @@ from geometry_msgs.msg import Pose2D
 import cv2 as cv
 from cv2 import aruco
 from cv_bridge import CvBridge
-from cv2 import WINDOW_NORMAL
-
 import numpy as np
+
+##############################################################
+"""Utility Functions"""
+def find_Center_of_Markers(MarkerArray):
+    c1, c2, c3, c4 = list(MarkerArray[0][0]), list(MarkerArray[0][1]), list(MarkerArray[0][2]), list(MarkerArray[0][3])
+    # print("c1 : "+str(c1)+'\n')
+    # We know that c1, c2, c3 and c4 are clockwise from top left
+    diagonal1_x = (c1[0]+c3[0]) / 2
+    diagonal1_y = (c1[1] + c3[1]) / 2
+    diagonal2_x = (c2[0] + c4[0]) / 2
+    diagonal2_y = (c2[1] + c4[1]) / 2
+
+    # Calculate the center as the intersection of diagonals
+    center_x = (diagonal1_x + diagonal2_x) / 2
+    center_y = (diagonal1_y + diagonal2_y) / 2
+
+    return (center_x, center_y)
+
 
 ##############################################################
 class ArUcoDetector(Node):
@@ -43,35 +59,44 @@ class ArUcoDetector(Node):
         # Publish to topic /aruco_detection
         self.ad_publisher = self.create_publisher(Pose2D,'/detect_aruco',1)
 
-        self.bridge = CvBridge()
-        #A dictionary of 50 4x4 aruco markers
-        self.marker_dict = aruco.Dictionary_get(aruco.DICT4X4_50)
-
-        #Creating a window to display the image from the camera
-        cv.NamedWindow(self.node_name, WINDOW_NORMAL)
-        cv.MoveWindow(self.node_name, 25, 350)
-
+        
         # For maintaining control loop rate.
         self.rate = self.create_rate(100)
+        self.bridge = CvBridge()
 
 
     def image_callback(self, msg):
         #convert ROS image to opencv image
         cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-        #Making the image as an numpy array
-        # cv_image = np.array(cv_image,dtype=np.uint8)
+        dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_250)
+        parameters =  cv.aruco.DetectorParameters()
+        detector = cv.aruco.ArucoDetector(dictionary, parameters)
+        markers, ids, rejectedCandidates = detector.detectMarkers(cv_image)
+        #Find the markers
+        image_with_markers = cv.aruco.drawDetectedMarkers(cv_image, markers, ids)
+        cv.imshow('Camera Image', image_with_markers)
+        cv.waitKey(1)       
 
-        # Using the default parameters
-        arucoParams = cv.arucoDetectorParameters_create()
-        #Find all the ArUco Markers!
-        corners, ids, rejected  = cv.aruco.detectMarkers(cv_image, self.marker_dict, parameters=arucoParams) 
+
         # DO THE CALCULATIONS HERE : EXTACT x, y & theta from the extracted data
 
-        #Displaying the image in the window
-        cv.imshow(self.cv_window_name, cv_image)
+        # Finding the centers of the markers at the corners
+        # Need to do it one time only
+        #then we can use this centers list for all calculations
+        centers=[]
+        
+        for marker in markers:
+                centers.append(find_Center_of_Markers(marker))
+            
+        #Remove the center of bot which is at the end of the list centers
+        bot_coordinates = centers.pop()
+        print("Bot coordinates :  "+str(bot_coordinates))
+        print("Centers :  "+str(centers))
 
-        #Detect Aruco marker
-        self.get_logger().info(str(cv.aruco.detect.markers(cv_image)))
+            
+            
+        
+
 
         # Publish the bot coordinates to the topic  /detected_aruco
         # control_pose = Pose2D()
