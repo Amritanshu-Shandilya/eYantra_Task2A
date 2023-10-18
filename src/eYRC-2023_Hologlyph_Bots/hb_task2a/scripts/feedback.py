@@ -26,8 +26,11 @@ from geometry_msgs.msg import Pose2D
 
 import cv2.aruco
 import numpy as np
+from cv_bridge import CvBridge
+import cv2
 
 ##############################################################
+
 class ArUcoDetector(Node):
 
     def __init__(self):
@@ -39,33 +42,37 @@ class ArUcoDetector(Node):
 
         # For maintaining control loop rate.
         self.rate = self.create_rate(100)
+        self.bridge = CvBridge()
 
 
     def image_callback(self, msg):
         #convert ROS image to opencv image
-        cv_image = self.cv_bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-        
-
+        cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
 
         #Detect Aruco marker
-        self.get_logger().info(str(cv.aruco.detect.markers(cv_image)))
+        aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+        aruco_parameters = cv2.aruco.DetectorParameters()
+        corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(cv_image, aruco_dict, parameters=aruco_parameters)
 
-# Find ArUco!
-# OpenCV makes this super easy, we just use cv2.aruco.detectMarkers to find all the ArUco Markers!
-# This will return (corners, ids, rejected)
+        # Print detected aruco id with its corners
+        for id, corner in zip(ids, corners):
+            print(id[0], [list(i) for i in corner[0]])
+        print()
 
-# Take the corners of the quadralateral (i.e. list of (x,y) of the four corners) of id of interest... and... extract (x,y,theta) from it 😛
+        # Display the image with aruco marers using OpenCV
+        image_with_markers = cv2.aruco.drawDetectedMarkers(cv_image, corners, ids)
+        cv2.imshow('Camera Image', image_with_markers)
+        cv2.waitKey(1)
 
         # Publish the bot coordinates to the topic  /detected_aruco
-        control_pose = Pose2D()
+        # control_pose = Pose2D()
 
             # Replace the 0s with the extracted x,y and theta
-        control_pose.x = 0
-        control_pose.y = 0
-        control_pose.theta =0
+        # control_pose.x = 0
+        # control_pose.y = 0
+        # control_pose.theta =0
         
 
-       
 
 def main(args=None):
     rclpy.init(args=args)
