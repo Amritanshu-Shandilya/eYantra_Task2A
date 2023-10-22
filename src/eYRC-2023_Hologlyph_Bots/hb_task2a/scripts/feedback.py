@@ -75,6 +75,11 @@ class ArUcoDetector(Node):
         self.rate = self.create_rate(100)
         self.bridge = CvBridge()
 
+        self.corners = [None, None, None, None]
+        self.bot_x = None
+        self.bot_y = None
+        self.bot_theeta = None
+
 
     def image_callback(self, msg):
         #convert ROS image to opencv image
@@ -87,13 +92,27 @@ class ArUcoDetector(Node):
 
         # Print detected aruco id with its corners
         for id, corner in zip(ids, corners):
-            corner = corner[0]
+            corner = list(map(list, corner[0]))
             center = marker_center_diag_intersection(corner)
             angle = marker_orientation(corner)
             cv_image = cv2.circle(cv_image, center, radius=3, color=(154, 54, 179), thickness=-1)
-            print(f"{id[0]} \t {round(angle, 3)} \t {center}")
-            aruco_marker[id[0]] = [center, angle]
+            aruco_marker[id[0]] = [center, angle, corner]
         print()
+
+        if 1 in aruco_marker:
+            self.bot_x, self.bot_y = aruco_marker[1][0]
+            self.bot_theeta = aruco_marker[1][1]
+        if 6 in aruco_marker:
+            self.corners[0] = aruco_marker[6][2][0]
+        if 10 in aruco_marker:
+            self.corners[1] = aruco_marker[10][2][1]
+        if 12 in aruco_marker:
+            self.corners[2] = aruco_marker[12][2][2]
+        if 4 in aruco_marker:
+            self.corners[4] = aruco_marker[4][2][3]
+
+        print(f"Corners: {self.corners}")
+        print(f"Bot: Center:\t({self.bot_x}, {self.bot_y})\tTheeta:{self.bot_theeta}")
 
 
         # Display the image with aruco marers using OpenCV
