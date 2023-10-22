@@ -31,6 +31,8 @@ import cv2
 
 ##############################################################
 
+DEBUG = False
+
 def marker_orientation(corners):
     tl = corners[0]  # top left
     tr = corners[1]  # top right
@@ -59,7 +61,7 @@ def marker_center_diag_intersection(corners):
     center_x = (diagonal1_x + diagonal2_x) / 2
     center_y = (diagonal1_y + diagonal2_y) / 2
 
-    return round(center_x), round(center_y)
+    return center_x, center_y
 
 
 class ArUcoDetector(Node):
@@ -69,7 +71,7 @@ class ArUcoDetector(Node):
         # Subscribe the topic /camera/image_raw
         self.r_image_subscriber = self.create_subscription(Image, '/camera/image_raw', self.image_callback, 1)
         # Publish to topic /aruco_detection
-        self.ad_publisher = self.create_publisher(Pose2D,'/detect_aruco',1)
+        self.ad_publisher = self.create_publisher(Pose2D,'/hb_bot_1/detect_aruco',10)
 
         # For maintaining control loop rate.
         self.rate = self.create_rate(100)
@@ -79,6 +81,8 @@ class ArUcoDetector(Node):
         self.bot_x = None
         self.bot_y = None
         self.bot_theeta = None
+
+        self.timer = self.create_timer(0.5, self.bot_pos_publish)
 
 
     def image_callback(self, msg):
@@ -95,9 +99,8 @@ class ArUcoDetector(Node):
             corner = list(map(list, corner[0]))
             center = marker_center_diag_intersection(corner)
             angle = marker_orientation(corner)
-            cv_image = cv2.circle(cv_image, center, radius=3, color=(154, 54, 179), thickness=-1)
+            cv_image = cv2.circle(cv_image, (int(center[0]), int(center[1])), radius=3, color=(154, 54, 179), thickness=-1)
             aruco_marker[id[0]] = [center, angle, corner]
-        print()
 
         if 1 in aruco_marker:
             self.bot_x, self.bot_y = aruco_marker[1][0]
@@ -111,8 +114,9 @@ class ArUcoDetector(Node):
         if 4 in aruco_marker:
             self.corners[4] = aruco_marker[4][2][3]
 
-        print(f"Corners: {self.corners}")
-        print(f"Bot: Center:\t({self.bot_x}, {self.bot_y})\tTheeta:{self.bot_theeta}")
+        if DEBUG:
+            print(f"Corners: {self.corners}")
+            print(f"Bot: Center:\t({self.bot_x}, {self.bot_y})\tTheeta:{self.bot_theeta}")
 
 
         # Display the image with aruco marers using OpenCV
@@ -120,7 +124,13 @@ class ArUcoDetector(Node):
         cv2.imshow('Camera Image', image_with_markers)
         cv2.waitKey(1)
 
-        
+    def bot_pos_publish(self):
+        msg = Pose2D()
+        msg.x = self.bot_x
+        msg.y = self.bot_y
+        msg.theta = self.bot_theeta
+        self.ad_publisher.publish(msg)
+        self.get_logger().info(f'Publishing: ({msg.x},{msg.y}), {msg.theta}')
 
 
 def main(args=None):
