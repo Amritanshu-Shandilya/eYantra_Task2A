@@ -61,14 +61,6 @@ def marker_center_diag_intersection(corners):
 
     return center_x, center_y
 
-def marker_center_coord_avg(corners):
-    # Calculate the average of X and Y coordinates
-    x_sum = sum(point[0] for point in corners)
-    y_sum = sum(point[1] for point in corners)
-    center_x = x_sum / len(corners)
-    center_y = y_sum / len(corners)
-    return center_x, center_y
-
 
 class ArUcoDetector(Node):
 
