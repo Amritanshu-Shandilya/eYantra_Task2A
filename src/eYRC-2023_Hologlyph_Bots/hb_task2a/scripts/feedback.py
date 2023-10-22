@@ -31,6 +31,22 @@ import cv2
 
 ##############################################################
 
+def Calculate_orientation_in_radians(corners):
+    tl = corners[0]  # top left
+    tr = corners[1]  # top right
+    br = corners[2]  # bottom right
+    bl = corners[3]  # bottom left
+    top = (tl[0] + tr[0]) / 2, (tl[1] + tr[1]) / 2
+    centre = (tl[0] + tr[0] + bl[0] + br[0]) / 4, (tl[1] + tr[1] + bl[1] + br[1]) / 4
+
+    angle = math.atan2(top[0] - centre[0], centre[1] - top[1])
+    
+    # Ensure the angle is in the range [0, 2π)
+    if angle < 0:
+        angle += 2 * math.pi
+
+    return angle
+
 
 def marker_center_diag_intersection(corners):
     # Calculate midpoints of the diagonals
@@ -83,6 +99,7 @@ class ArUcoDetector(Node):
             diag_intersection = marker_center_diag_intersection(corner)
             avg_intersection = marker_center_coord_avg(corner)
             int_center = (int(avg_intersection[0]), int(avg_intersection[1]))
+            angle = Calculate_orientation_in_radians(corner)
             cv_image = cv2.circle(cv_image, int_center, radius=3, color=(154, 54, 179), thickness=-1)
             print(id[0], diag_intersection, avg_intersection)
         print()
