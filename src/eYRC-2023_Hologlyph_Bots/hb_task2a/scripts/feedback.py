@@ -28,6 +28,7 @@ import cv2.aruco
 import numpy as np
 from cv_bridge import CvBridge
 import cv2
+import math
 
 ##############################################################
 
@@ -93,6 +94,8 @@ class ArUcoDetector(Node):
         aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
         aruco_parameters = cv2.aruco.DetectorParameters()
         corners, ids, rejectedImgPoints = cv2.aruco.detectMarkers(cv_image, aruco_dict, parameters=aruco_parameters)
+
+        aruco_marker = {}
 
         # Print detected aruco id with its corners
         for id, corner in zip(ids, corners):
