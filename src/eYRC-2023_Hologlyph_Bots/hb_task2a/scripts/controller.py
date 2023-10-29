@@ -116,8 +116,8 @@ class HBController(Node):
         time.sleep(1)
         
 
-    def inverse_kinematics(self):
-        values = [self.hb_x, self.hb_y, self.hb_theta]
+    def inverse_kinematics(self, values):
+        
         m2 = np.array(values)
         coordinates = m2.reshape(3,1)
 
@@ -158,30 +158,21 @@ def main(args=None):
                 hb_controller.flag = response.end_of_list
                 ####################################################
                 
-                # <NEED TO VERIFY THIS>
-                # Calculate Error from feedback
-                error_x = x_goal - HBController.hb_x
-                error_y = y_goal - HBController.hb_y
-                error_theta = theta_goal - HBController.hb_theta
+                bot_real_theta = -HBController.hb_theta 
+                # Change the frame by using Rotation Matrix
+                x_cor = HBController.hb_x * math.cos(bot_real_theta) - HBController.hb_y * math.sin(bot_real_theta)
+                y_cor = HBController.hb_x  * math.sin(bot_real_theta) + HBController.hb_x  * math.cos(bot_real_theta)
 
-                bot_real_theeta = -HBController.hb_theta         # the theeta in Odometry is inverse in gobal scope
-
-                    # Finally use the error and orientation of the bot and calculate the x and y velocity
-                    # using coordinate transformation and apply the k controller rate
-                v_x = HBController.Kp * (error_x * math.cos(bot_real_theeta) - error_y * math.sin(bot_real_theeta))
-                v_y = HBController.Kp * (error_x * math.sin(bot_real_theeta) + error_y * math.cos(bot_real_theeta))
-
-                    # extra 0.5 k controller rate for faster angular movement
-                w = (HBController.Kp + 0.5) * error_theta 
-
-
-
-                # Change the frame by using Rotation Matrix (If you find it required)
+               
                 # Calculate the required velocity of bot for the next iteration(s)
-                # Find the required force vectors for individual wheels from it.(Inverse Kinematics)
-                # Apply appropriate force vectors
-                # Modify the condition to Switch to Next goal (given position in pixels instead of meters)
 
+
+                # Find the required force vectors for individual wheels from it.(Inverse Kinematics)
+                values = [x_cor, y_cor, bot_real_theta]
+                result = HBController.inverse_kinematics(values)
+
+
+                # Apply appropriate force vectors
                 #Create the messages and publish the data:
                 msg1 = Wrench()
                 msg1.force.y = HBController.v1
@@ -194,6 +185,8 @@ def main(args=None):
                 msg3 = Wrench()
                 msg3.force.y = HBController.v3
                 HBController.v3_publisher.publish(msg3)
+                
+                # Modify the condition to Switch to Next goal (given position in pixels instead of meters)
                         
                 ############     DO NOT MODIFY THIS       #########
                 hb_controller.index += 1
