@@ -59,7 +59,7 @@ class HBController(Node):
         super().__init__('hb_controller')
         
         # Initialze Subscriber
-        self.aruco_subscriber = self.create_subscription(Pose2D,'/detect_aruco',self.aruco_detect_callback, 1)
+        self.aruco_subscriber = self.create_subscription(Pose2D,'/hb_bot_1/detect_aruco',self.aruco_detect_callback, 10)
 
 	    #	Use the below given topics to generate motion for the robot.
         #   /hb_bot_1/left_wheel_force,
@@ -92,8 +92,12 @@ class HBController(Node):
         self.index = 0
 
 
-    def aruco_detect_callback():
-        pass
+    def aruco_detect_callback(self, msg):
+        self.hb_x = msg.x
+        self.hb_y = msg.y
+        self.hb_theta = msg.theta
+        print(self.hb_x, self.hb_y, self.hb_theta)
+
     
     # Method to create a request to the "next_goal" service
     def send_request(self, request_goal):
