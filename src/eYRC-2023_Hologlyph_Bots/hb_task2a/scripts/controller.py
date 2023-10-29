@@ -19,7 +19,7 @@
 
 
 # Team ID:		2883
-# Author List:	Anurag,, Amritanshu, Saumitra, Ansh
+# Author List:	Anurag, Amritanshu, Saumitra, Ansh
 # Filename:		feedback.py
 # Functions:
 #			[ Comma separated list of functions in this file ]
@@ -32,6 +32,7 @@ import rclpy
 from rclpy.node import Node
 import time
 import math
+import numpy as np
 from tf_transformations import euler_from_quaternion
 from my_robot_interfaces.srv import NextGoal  
 from geometry_msgs.msg import Wrench
@@ -46,6 +47,10 @@ from geometry_msgs.msg import Pose2D
 
 
 # Initialize Global variables
+values = [-0.33, 0.58, 0.33, -0.33, -0.58, 0.33, 0.67, 0, 0.33]
+    #Create a 3x3 numpy matrix out of this list
+matrix = np.array(values)
+matrix = matrix.reshape(3,3)
 
 
 ################# ADD UTILITY FUNCTIONS HERE #################
@@ -59,7 +64,7 @@ class HBController(Node):
         super().__init__('hb_controller')
         
         # Initialze Subscriber
-        self.aruco_subscriber = self.create_subscription(Pose2D,'/detect_aruco',self.aruco_detect_callback, 1)
+        self.aruco_subscriber = self.create_subscription(Pose2D,'/hb_bot_1/detect_aruco',self.aruco_detect_callback, 10)
 
 	    #	Use the below given topics to generate motion for the robot.
         #   /hb_bot_1/left_wheel_force,
@@ -92,8 +97,12 @@ class HBController(Node):
         self.index = 0
 
 
-    def aruco_detect_callback():
-        pass
+    def aruco_detect_callback(self, msg):
+        self.hb_x = msg.x
+        self.hb_y = msg.y
+        self.hb_theta = msg.theta
+        print(self.hb_x, self.hb_y, self.hb_theta)
+
     
     # Method to create a request to the "next_goal" service
     def send_request(self, request_goal):
@@ -102,15 +111,14 @@ class HBController(Node):
         time.sleep(1)
         
 
-    def inverse_kinematics():
-        ############ ADD YOUR CODE HERE ############
+    def inverse_kinematics(self):
+        values = [self.hb_x, self.hb_y, self.hb_theta]
+        m2 = np.array(values)
+        coordinates = m2.reshape(3,1)
 
-        # INSTRUCTIONS & HELP : 
-        #	-> Use the target velocity you calculated for the robot in previous task, and
-        #	Process it further to find what proportions of that effort should be given to 3 individuals wheels !!
-        #	Publish the calculated efforts to actuate robot by applying force vectors on provided topics
-        ############################################
-        pass
+        # multiply these 2 matrices to find the wheel velocities
+        result = np.matmul(matrix, coordinates)
+        return result
 
 
 def main(args=None):
