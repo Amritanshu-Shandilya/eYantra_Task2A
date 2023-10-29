@@ -85,6 +85,11 @@ class HBController(Node):
         self.hb_y = 0.
         self.hb_theta = 0.
 
+        #Variables to hold wheel velocities
+        self.v1 = 0.
+        self.v2 = 0.
+        self.v3 = 0.
+
         # For maintaining control loop rate.
         self.rate = self.create_rate(100)
 
@@ -118,7 +123,11 @@ class HBController(Node):
 
         # multiply these 2 matrices to find the wheel velocities
         result = np.matmul(matrix, coordinates)
-        return result
+        
+        #storing these velocities in the global variables
+        self.v1 = result[0][0]
+        self.v2 = result[1][0]
+        self.v3 = result[2][0]
 
 
 def main(args=None):
@@ -168,14 +177,23 @@ def main(args=None):
 
 
                 # Change the frame by using Rotation Matrix (If you find it required)
-
                 # Calculate the required velocity of bot for the next iteration(s)
-                
                 # Find the required force vectors for individual wheels from it.(Inverse Kinematics)
-
                 # Apply appropriate force vectors
-
                 # Modify the condition to Switch to Next goal (given position in pixels instead of meters)
+
+                #Create the messages and publish the data:
+                msg1 = Wrench()
+                msg1.force.y = HBController.v1
+                HBController.v1_publisher.publish(msg1)
+
+                msg2 = Wrench()
+                msg2.force.y = HBController.v2
+                HBController.v2_publisher.publish(msg2)
+
+                msg3 = Wrench()
+                msg3.force.y = HBController.v3
+                HBController.v3_publisher.publish(msg3)
                         
                 ############     DO NOT MODIFY THIS       #########
                 hb_controller.index += 1
