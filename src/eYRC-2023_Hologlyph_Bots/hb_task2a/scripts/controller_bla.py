@@ -1,4 +1,3 @@
-#! /usr/bin/env python3
 
 '''
 *****************************************************************************************
@@ -94,6 +93,7 @@ class HBController(Node):
         self.rate = self.create_rate(100)
         self.timer = self.create_timer(0.5, self.inverse_kinematics)
 
+
         
         self.Kp = 1
 
@@ -118,6 +118,7 @@ class HBController(Node):
         
 
     def inverse_kinematics(self):
+        
         values = [self.hb_x, self.hb_y, self.hb_theta]
         m2 = np.array(values)
         coordinates = m2.reshape(3,1)
@@ -130,18 +131,14 @@ class HBController(Node):
         self.v2 = result[1][0]
         self.v3 = result[2][0]
 
-        # Apply appropriate force vectors
-            #Create the messages and publish the data:
         msg1 = Wrench()
-        msg1.force.y = self.v1
-        self.v1_publisher.publish(msg1)
-
         msg2 = Wrench()
-        msg2.force.y = self.v2
-        self.v2_publisher.publish(msg2)
-
         msg3 = Wrench()
-        msg3.force.y = self .v3
+        msg1.force.y = self.v1
+        msg2.force.y = self.v2
+        msg3.force.y = self.v3
+        self.v1_publisher.publish(msg1)
+        self.v2_publisher.publish(msg2)
         self.v3_publisher.publish(msg3)
 
 
@@ -154,7 +151,7 @@ def main(args=None):
     # Send an initial request with the index from HBController.index
     # hb_controller.send_request(hb_controller.index)
     
-    # Main loop
+    # # Main loop
     # while rclpy.ok():
 
     #     # Check if the service call is done
@@ -174,8 +171,6 @@ def main(args=None):
     #             ####################################################
                 
     #             bot_real_theta = -HBController.hb_theta 
-
-
     #             # Change the frame by using Rotation Matrix
     #             x_cor = HBController.hb_x * math.cos(bot_real_theta) - HBController.hb_y * math.sin(bot_real_theta)
     #             y_cor = HBController.hb_x  * math.sin(bot_real_theta) + HBController.hb_x  * math.cos(bot_real_theta)
@@ -185,10 +180,24 @@ def main(args=None):
 
 
     #             # Find the required force vectors for individual wheels from it.(Inverse Kinematics)
-    #             # values = [x_cor, y_cor, bot_real_theta]
-    #             values = [HBController.hb_x, HBController.hb_y, HBController.hb_theta]
-    #             HBController.inverse_kinematics(values)
+    #             values = [x_cor, y_cor, bot_real_theta]
+    #             result = HBController.inverse_kinematics(values)
 
+
+    #             # Apply appropriate force vectors
+    #             #Create the messages and publish the data:
+    #             msg1 = Wrench()
+    #             msg1.force.y = HBController.v1
+    #             HBController.v1_publisher.publish(msg1)
+
+    #             msg2 = Wrench()
+    #             msg2.force.y = HBController.v2
+    #             HBController.v2_publisher.publish(msg2)
+
+    #             msg3 = Wrench()
+    #             msg3.force.y = HBController.v3
+    #             HBController.v3_publisher.publish(msg3)
+                
     #             # Modify the condition to Switch to Next goal (given position in pixels instead of meters)
                         
     #             ############     DO NOT MODIFY THIS       #########
