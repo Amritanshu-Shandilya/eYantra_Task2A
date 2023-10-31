@@ -34,7 +34,7 @@ import time
 import math
 import numpy as np
 from tf_transformations import euler_from_quaternion
-from my_robot_interfaces.srv import NextGoal  
+# from my_robot_interfaces.srv import NextGoal  
 from geometry_msgs.msg import Wrench
 from geometry_msgs.msg import Pose2D 
 
@@ -92,14 +92,15 @@ class HBController(Node):
 
         # For maintaining control loop rate.
         self.rate = self.create_rate(100)
+        self.timer = self.create_timer(0.5, self.inverse_kinematics)
 
         
         self.Kp = 1
 
         # client for the "next_goal" service
-        self.cli = self.create_client(NextGoal, 'next_goal')      
-        self.req = NextGoal.Request() 
-        self.index = 0
+        # self.cli = self.create_client(NextGoal, 'next_goal')      
+        # self.req = NextGoal.Request() 
+        # self.index = 0
 
 
     def aruco_detect_callback(self, msg):
@@ -110,14 +111,14 @@ class HBController(Node):
 
     
     # Method to create a request to the "next_goal" service
-    def send_request(self, request_goal):
-        self.req.request_goal = request_goal
-        self.future = self.cli.call_async(self.req)
-        time.sleep(1)
+    # def send_request(self, request_goal):
+    #     self.req.request_goal = request_goal
+    #     self.future = self.cli.call_async(self.req)
+    #     time.sleep(1)
         
 
-    def inverse_kinematics(self, values):
-        
+    def inverse_kinematics(self):
+        values = [self.hb_x, self.hb_y, self.hb_theta]
         m2 = np.array(values)
         coordinates = m2.reshape(3,1)
 
@@ -129,6 +130,20 @@ class HBController(Node):
         self.v2 = result[1][0]
         self.v3 = result[2][0]
 
+        # Apply appropriate force vectors
+            #Create the messages and publish the data:
+        msg1 = Wrench()
+        msg1.force.y = self.v1
+        self.v1_publisher.publish(msg1)
+
+        msg2 = Wrench()
+        msg2.force.y = self.v2
+        self.v2_publisher.publish(msg2)
+
+        msg3 = Wrench()
+        msg3.force.y = self .v3
+        self.v3_publisher.publish(msg3)
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -137,66 +152,54 @@ def main(args=None):
     hb_controller = HBController()
    
     # Send an initial request with the index from HBController.index
-    hb_controller.send_request(hb_controller.index)
+    # hb_controller.send_request(hb_controller.index)
     
     # Main loop
-    while rclpy.ok():
+    # while rclpy.ok():
 
-        # Check if the service call is done
-        if hb_controller.future.done():
-            try:
-                # response from the service call
-                response = hb_controller.future.result()
-            except Exception as e:
-                hb_controller.get_logger().infselfo(
-                    'Service call failed %r' % (e,))
-            else:
-                #########           GOAL POSE             #########
-                x_goal      = response.x_goal
-                y_goal      = response.y_goal
-                theta_goal  = response.theta_goal
-                hb_controller.flag = response.end_of_list
-                ####################################################
+    #     # Check if the service call is done
+    #     if hb_controller.future.done():
+    #         try:
+    #             # response from the service call
+    #             response = hb_controller.future.result()
+    #         except Exception as e:
+    #             hb_controller.get_logger().infselfo(
+    #                 'Service call failed %r' % (e,))
+    #         else:
+    #             #########           GOAL POSE             #########
+    #             x_goal      = response.x_goal
+    #             y_goal      = response.y_goal
+    #             theta_goal  = response.theta_goal
+    #             hb_controller.flag = response.end_of_list
+    #             ####################################################
                 
-                bot_real_theta = -HBController.hb_theta 
-                # Change the frame by using Rotation Matrix
-                x_cor = HBController.hb_x * math.cos(bot_real_theta) - HBController.hb_y * math.sin(bot_real_theta)
-                y_cor = HBController.hb_x  * math.sin(bot_real_theta) + HBController.hb_x  * math.cos(bot_real_theta)
+    #             bot_real_theta = -HBController.hb_theta 
+
+
+    #             # Change the frame by using Rotation Matrix
+    #             x_cor = HBController.hb_x * math.cos(bot_real_theta) - HBController.hb_y * math.sin(bot_real_theta)
+    #             y_cor = HBController.hb_x  * math.sin(bot_real_theta) + HBController.hb_x  * math.cos(bot_real_theta)
 
                
-                # Calculate the required velocity of bot for the next iteration(s)
+    #             # Calculate the required velocity of bot for the next iteration(s)
 
 
-                # Find the required force vectors for individual wheels from it.(Inverse Kinematics)
-                values = [x_cor, y_cor, bot_real_theta]
-                result = HBController.inverse_kinematics(values)
+    #             # Find the required force vectors for individual wheels from it.(Inverse Kinematics)
+    #             # values = [x_cor, y_cor, bot_real_theta]
+    #             values = [HBController.hb_x, HBController.hb_y, HBController.hb_theta]
+    #             HBController.inverse_kinematics(values)
 
-
-                # Apply appropriate force vectors
-                #Create the messages and publish the data:
-                msg1 = Wrench()
-                msg1.force.y = HBController.v1
-                HBController.v1_publisher.publish(msg1)
-
-                msg2 = Wrench()
-                msg2.force.y = HBController.v2
-                HBController.v2_publisher.publish(msg2)
-
-                msg3 = Wrench()
-                msg3.force.y = HBController.v3
-                HBController.v3_publisher.publish(msg3)
-                
-                # Modify the condition to Switch to Next goal (given position in pixels instead of meters)
+    #             # Modify the condition to Switch to Next goal (given position in pixels instead of meters)
                         
-                ############     DO NOT MODIFY THIS       #########
-                hb_controller.index += 1
-                if hb_controller.flag == 1 :
-                    hb_controller.index = 0
-                hb_controller.send_request(hb_controller.index)
-                ####################################################
+    #             ############     DO NOT MODIFY THIS       #########
+    #             hb_controller.index += 1
+    #             if hb_controller.flag == 1 :
+    #                 hb_controller.index = 0
+    #             hb_controller.send_request(hb_controller.index)
+    #             ####################################################
 
         # Spin once to process callbacks
-        rclpy.spin_once(hb_controller)
+    rclpy.spin(hb_controller)
     
     # Destroy the node and shut down ROS
     hb_controller.destroy_node()
