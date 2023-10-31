@@ -45,6 +45,8 @@ from geometry_msgs.msg import Pose2D
            
 ##############################################################
 
+################# ADD UTILITY FUNCTIONS HERE #################
+
 
 # Initialize Global variables
 values = [-0.33, 0.58, 0.33, -0.33, -0.58, 0.33, 0.67, 0, 0.33]
@@ -52,9 +54,7 @@ values = [-0.33, 0.58, 0.33, -0.33, -0.58, 0.33, 0.67, 0, 0.33]
 matrix = np.array(values)
 matrix = matrix.reshape(3,3)
 
-
-################# ADD UTILITY FUNCTIONS HERE #################
-
+DEBUG = False
 ##############################################################
 
 
@@ -100,7 +100,7 @@ class HBController(Node):
         # client for the "next_goal" service
         # self.cli = self.create_client(NextGoal, 'next_goal')      
         # self.req = NextGoal.Request() 
-        # self.index = 0
+        self.index = 0
 
 
     def aruco_detect_callback(self, msg):
@@ -118,17 +118,48 @@ class HBController(Node):
         
 
     def inverse_kinematics(self):
-        values = [self.hb_x, self.hb_y, self.hb_theta]
+        # values = [self.hb_x, self.hb_y, self.hb_theta]
+
+        # For testing purpose we are trying to make a square
+        x_goal = [4, -4, -4, 4, 0][self.index]
+        y_goal = [4, 4, -4, -4, 0][self.index]
+        theta_goal  = [0, math.pi/2, -math.pi, -math.pi/2, 0][self.index]
+        self.flag = self.index == 4
+
+        # Finding error nd applying P-controller
+        x_err = x_goal - self.hb_x
+        y_err = y_goal - self.hb_y
+        theta_err = theta_goal - self.hb_theta
+
+        # Frame changing using Rotation matrix
+        bot_real_theta = -self.hb_theta
+        x_cor = x_err * math.cos(bot_real_theta) - y_err * math.sin(bot_real_theta)
+        y_cor = x_err  * math.sin(bot_real_theta) + y_err  * math.cos(bot_real_theta)
+
+        v_x = self.Kp * x_cor
+        v_y = self.Kp * y_cor
+        w = (self.Kp + 0.5)*theta_err
+
+        # Passing this values in as a 3*1 matrix for multiplication with the matrix declated at the top
+        values = [v_x, v_y, w]
         m2 = np.array(values)
-        coordinates = m2.reshape(3,1)
+        chassis_vel = m2.reshape(3,1)
 
         # multiply these 2 matrices to find the wheel velocities
-        result = np.matmul(matrix, coordinates)
+        result = np.matmul(matrix, chassis_vel)
         
         #storing these velocities in the global variables
         self.v1 = result[0][0]
         self.v2 = result[1][0]
         self.v3 = result[2][0]
+
+        # print the values, for debugging purpose
+        if DEBUG:
+            print("Goal:", x_goal, y_goal, theta_goal, self.flag)
+            print("Bot Pos:", self.hb_x, self.hb_y, self.hb_theta)
+            print("Error:", x_err, y_err, theta_err)
+            print("Speed:", v_x, v_y, w)
+            print()
 
         # Apply appropriate force vectors
             #Create the messages and publish the data:
@@ -143,6 +174,11 @@ class HBController(Node):
         msg3 = Wrench()
         msg3.force.y = self .v3
         self.v3_publisher.publish(msg3)
+
+        # this if below let the index increment only if you reach the desired goal
+        goal_error = math.sqrt(x_err**2 + y_err**2)
+        if goal_error < 0.1 and abs(theta_err) < 0.1:
+            self.get_logger().info(f'Reached Goal: x:{x_goal}, y:{y_goal}, theta:{theta_goal}\n')
 
 
 def main(args=None):
@@ -172,24 +208,12 @@ def main(args=None):
     #             theta_goal  = response.theta_goal
     #             hb_controller.flag = response.end_of_list
     #             ####################################################
-                
-    #             bot_real_theta = -HBController.hb_theta 
 
-
-    #             # Change the frame by using Rotation Matrix
-    #             x_cor = HBController.hb_x * math.cos(bot_real_theta) - HBController.hb_y * math.sin(bot_real_theta)
-    #             y_cor = HBController.hb_x  * math.sin(bot_real_theta) + HBController.hb_x  * math.cos(bot_real_theta)
-
-               
-    #             # Calculate the required velocity of bot for the next iteration(s)
-
-
-    #             # Find the required force vectors for individual wheels from it.(Inverse Kinematics)
-    #             # values = [x_cor, y_cor, bot_real_theta]
-    #             values = [HBController.hb_x, HBController.hb_y, HBController.hb_theta]
-    #             HBController.inverse_kinematics(values)
-
-    #             # Modify the condition to Switch to Next goal (given position in pixels instead of meters)
+                # For testing purpose we are trying to make a square
+                # x_goal = [4, -4, -4, 4, 0][HBController.index]
+                # y_goal = [4, 4, -4, -4, 0][HBController.index]
+                # theta_goal  = [0, math.pi/2, -math.pi, -math.pi/2, 0][HBController.index]
+                # HBController.flag = HBController.index == 4
                         
     #             ############     DO NOT MODIFY THIS       #########
     #             hb_controller.index += 1
