@@ -209,6 +209,7 @@ def main(args=None):
 
         # Spin once to process callbacks
         rclpy.spin_once(hb_controller)
+        time.sleep(0.1)
     
     # Destroy the node and shut down ROS
     hb_controller.destroy_node()
