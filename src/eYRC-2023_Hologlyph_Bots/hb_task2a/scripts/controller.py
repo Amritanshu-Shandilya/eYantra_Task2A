@@ -179,6 +179,10 @@ class HBController(Node):
         goal_error = math.sqrt(x_err**2 + y_err**2)
         if goal_error < 0.1 and abs(theta_err) < 0.1:
             self.get_logger().info(f'Reached Goal: x:{x_goal}, y:{y_goal}, theta:{theta_goal}\n')
+            self.index += 1
+            if self.flag == 1 :
+                self.index = 0
+    # hb_controller.send_request(hb_controller.index)
 
 
 def main(args=None):
