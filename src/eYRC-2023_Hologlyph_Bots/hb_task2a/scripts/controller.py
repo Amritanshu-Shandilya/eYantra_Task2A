@@ -34,7 +34,7 @@ import time
 import math
 import numpy as np
 from tf_transformations import euler_from_quaternion
-# from my_robot_interfaces.srv import NextGoal  
+from my_robot_interfaces.srv import NextGoal  
 from geometry_msgs.msg import Wrench
 from geometry_msgs.msg import Pose2D 
 
@@ -54,7 +54,7 @@ values = [-0.33, 0.58, 0.33, -0.33, -0.58, 0.33, 0.67, 0, 0.33]
 matrix = np.array(values)
 matrix = matrix.reshape(3,3)
 
-DEBUG = False
+DEBUG = True
 ##############################################################
 
 
@@ -94,11 +94,11 @@ class HBController(Node):
         self.rate = self.create_rate(100)
 
         
-        self.Kp = 1.5
+        self.Kp = 1
 
         # client for the "next_goal" service
-        # self.cli = self.create_client(NextGoal, 'next_goal')      
-        # self.req = NextGoal.Request() 
+        self.cli = self.create_client(NextGoal, 'next_goal')      
+        self.req = NextGoal.Request() 
         self.index = 0
         self.flag = 0
 
@@ -107,14 +107,12 @@ class HBController(Node):
         self.hb_x = msg.x
         self.hb_y = msg.y
         self.hb_theta = msg.theta
-        print(self.hb_x, self.hb_y, self.hb_theta)
 
     
     # Method to create a request to the "next_goal" service
-    # def send_request(self, request_goal):
-    #     self.req.request_goal = request_goal
-    #     self.future = self.cli.call_async(self.req)
-    #     time.sleep(1)
+    def send_request(self, request_goal):
+        self.req.request_goal = request_goal
+        self.future = self.cli.call_async(self.req)
         
 
     def inverse_kinematics(self, v_x, v_y, w):
@@ -140,32 +138,31 @@ def main(args=None):
     hb_controller = HBController()
    
     # Send an initial request with the index from HBController.index
-    # hb_controller.send_request(hb_controller.index)
+    hb_controller.send_request(hb_controller.index)
     
     # Main loop
     while rclpy.ok():
 
-    #     # Check if the service call is done
-        # if hb_controller.future.done():
-        if True:
-            # try:
-            #     # response from the service call
-            #     response = hb_controller.future.result()
-            # except Exception as e:
-            #     hb_controller.get_logger().infselfo(
-            #         'Service call failed %r' % (e,))
-            # else:
+        # Check if the service call is done
+        if hb_controller.future.done():
+            try:
+                # response from the service call
+                response = hb_controller.future.result()
+            except Exception as e:
+                hb_controller.get_logger().infselfo(
+                    'Service call failed %r' % (e,))
+            else:
                 #########           GOAL POSE             #########
-                # x_goal      = response.x_goal
-                # y_goal      = response.y_goal
-                # theta_goal  = response.theta_goal
-                # hb_controller.flag = response.end_of_list
+                x_goal      = response.x_goal
+                y_goal      = response.y_goal
+                theta_goal  = response.theta_goal
+                hb_controller.flag = response.end_of_list
                 ####################################################
 
-                x_goal = [100, 400, 400, 100, 250][hb_controller.index]
-                y_goal = [100, 100, 400, 400, 250][hb_controller.index]
-                theta_goal  = [0, 0, 0, 0, 0][hb_controller.index]
-                hb_controller.flag = hb_controller.index == 4
+                # x_goal = [100, 400, 400, 100, 250][hb_controller.index]
+                # y_goal = [100, 100, 400, 400, 250][hb_controller.index]
+                # theta_goal  = [0, 0, 0, 0, 0][hb_controller.index]
+                # hb_controller.flag = hb_controller.index == 4
 
                 # Finding error nd applying P-controller
                 x_err = x_goal - hb_controller.hb_x
@@ -182,27 +179,22 @@ def main(args=None):
                 w = (hb_controller.Kp + 0.5)*theta_err
 
                 # print the values, for debugging purpose
-                # if DEBUG:
-                #     print("Goal:", x_goal, y_goal, theta_goal, self.flag)
-                #     print("Bot Pos:", self.hb_x, self.hb_y, self.hb_theta)
-                #     print("Error:", x_err, y_err, theta_err)
-                #     print("Speed:", v_x, v_y, w)
-                #     print()
+                if DEBUG:
+                    print("Goal:", x_goal, y_goal, theta_goal, hb_controller.flag)
+                    print("Bot Pos:", hb_controller.hb_x, hb_controller.hb_y, hb_controller.hb_theta)
+                    print("Error:", x_err, y_err, theta_err)
+                    print("Speed:", v_x, v_y, w)
+                    print()
 
                 hb_controller.inverse_kinematics(v_x, v_y, w)
 
                 # Apply appropriate force vectors
                 #Create the messages and publish the data:
-                msg1 = Wrench()
-                msg1.force.y = hb_controller.v1
+                msg1, msg2, msg3 = Wrench(), Wrench(), Wrench()
+                msg1.force.y, msg2.force.y, msg2.force.y = hb_controller.v1, hb_controller.v2, hb_controller.v2
+
                 hb_controller.v1_publisher.publish(msg1)
-
-                msg2 = Wrench()
-                msg2.force.y = hb_controller.v2
                 hb_controller.v2_publisher.publish(msg2)
-
-                msg3 = Wrench()
-                msg3.force.y = hb_controller .v3
                 hb_controller.v3_publisher.publish(msg3)
 
                 goal_error = math.sqrt(x_err**2 + y_err**2)
@@ -212,7 +204,7 @@ def main(args=None):
                     hb_controller.index += 1
                     if hb_controller.flag == 1 :
                         hb_controller.index = 0
-                    # hb_controller.send_request(hb_controller.index)
+                    hb_controller.send_request(hb_controller.index)
                     ####################################################
 
         # Spin once to process callbacks
