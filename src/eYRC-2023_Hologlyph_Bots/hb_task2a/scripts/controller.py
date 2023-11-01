@@ -92,7 +92,6 @@ class HBController(Node):
 
         # For maintaining control loop rate.
         self.rate = self.create_rate(100)
-        self.timer = self.create_timer(0.5, self.inverse_kinematics)
 
         
         self.Kp = 1.5
@@ -118,31 +117,7 @@ class HBController(Node):
     #     time.sleep(1)
         
 
-    def inverse_kinematics(self):
-        # values = [self.hb_x, self.hb_y, self.hb_theta]
-
-        # For testing purpose we are trying to make a square
-        x_goal = [100, 400, 400, 100, 250][self.index]
-        y_goal = [100, 100, 400, 400, 250][self.index]
-        # theta_goal  = [0, math.pi/2, -math.pi, -math.pi/2, 0][self.index]
-        theta_goal  = [0, 0, 0, 0, 0][self.index]
-        if self.index == 4:
-            self.flag = 1
-
-        # Finding error nd applying P-controller
-        x_err = x_goal - self.hb_x
-        y_err = y_goal - self.hb_y
-        theta_err = theta_goal - self.hb_theta
-
-        # Frame changing using Rotation matrix
-        bot_real_theta = -self.hb_theta
-        x_cor = x_err * math.cos(bot_real_theta) - y_err * math.sin(bot_real_theta)
-        y_cor = x_err  * math.sin(bot_real_theta) + y_err  * math.cos(bot_real_theta)
-
-        v_x = self.Kp * x_cor
-        v_y = self.Kp * y_cor
-        w = (self.Kp + 0.5)*theta_err
-
+    def inverse_kinematics(self, v_x, v_y, w):
         # Passing this values in as a 3*1 matrix for multiplication with the matrix declated at the top
         values = [v_x, v_y, w]
         m2 = np.array(values)
@@ -156,37 +131,6 @@ class HBController(Node):
         self.v2 = result[1][0]
         self.v3 = result[2][0]
 
-        # print the values, for debugging purpose
-        if DEBUG:
-            print("Goal:", x_goal, y_goal, theta_goal, self.flag)
-            print("Bot Pos:", self.hb_x, self.hb_y, self.hb_theta)
-            print("Error:", x_err, y_err, theta_err)
-            print("Speed:", v_x, v_y, w)
-            print()
-
-        # Apply appropriate force vectors
-            #Create the messages and publish the data:
-        msg1 = Wrench()
-        msg1.force.y = self.v1
-        self.v1_publisher.publish(msg1)
-
-        msg2 = Wrench()
-        msg2.force.y = self.v2
-        self.v2_publisher.publish(msg2)
-
-        msg3 = Wrench()
-        msg3.force.y = self .v3
-        self.v3_publisher.publish(msg3)
-
-        # this if below let the index increment only if you reach the desired goal
-        goal_error = math.sqrt(x_err**2 + y_err**2)
-        if goal_error < 5:
-            self.get_logger().info(f'Reached Goal: x:{x_goal}, y:{y_goal}, theta:{theta_goal}\n')
-            self.index += 1
-            if self.flag == 1 :
-                self.index = 0
-                self.flag = 0
-    # hb_controller.send_request(hb_controller.index)
 
 
 def main(args=None):
@@ -199,39 +143,80 @@ def main(args=None):
     # hb_controller.send_request(hb_controller.index)
     
     # Main loop
-    # while rclpy.ok():
+    while rclpy.ok():
 
     #     # Check if the service call is done
-    #     if hb_controller.future.done():
-    #         try:
-    #             # response from the service call
-    #             response = hb_controller.future.result()
-    #         except Exception as e:
-    #             hb_controller.get_logger().infselfo(
-    #                 'Service call failed %r' % (e,))
-    #         else:
-    #             #########           GOAL POSE             #########
-    #             x_goal      = response.x_goal
-    #             y_goal      = response.y_goal
-    #             theta_goal  = response.theta_goal
-    #             hb_controller.flag = response.end_of_list
-    #             ####################################################
+        # if hb_controller.future.done():
+        if True:
+            # try:
+            #     # response from the service call
+            #     response = hb_controller.future.result()
+            # except Exception as e:
+            #     hb_controller.get_logger().infselfo(
+            #         'Service call failed %r' % (e,))
+            # else:
+                #########           GOAL POSE             #########
+                # x_goal      = response.x_goal
+                # y_goal      = response.y_goal
+                # theta_goal  = response.theta_goal
+                # hb_controller.flag = response.end_of_list
+                ####################################################
 
-                # For testing purpose we are trying to make a square
-                # x_goal = [4, -4, -4, 4, 0][HBController.index]
-                # y_goal = [4, 4, -4, -4, 0][HBController.index]
-                # theta_goal  = [0, math.pi/2, -math.pi, -math.pi/2, 0][HBController.index]
-                # HBController.flag = HBController.index == 4
-                        
-    #             ############     DO NOT MODIFY THIS       #########
-    #             hb_controller.index += 1
-    #             if hb_controller.flag == 1 :
-    #                 hb_controller.index = 0
-    #             hb_controller.send_request(hb_controller.index)
-    #             ####################################################
+                x_goal = [100, 400, 400, 100, 250][hb_controller.index]
+                y_goal = [100, 100, 400, 400, 250][hb_controller.index]
+                theta_goal  = [0, 0, 0, 0, 0][hb_controller.index]
+                hb_controller.flag = hb_controller.index == 4
+
+                # Finding error nd applying P-controller
+                x_err = x_goal - hb_controller.hb_x
+                y_err = y_goal - hb_controller.hb_y
+                theta_err = theta_goal - hb_controller.hb_theta
+
+                # Frame changing using Rotation matrix
+                bot_real_theta = -hb_controller.hb_theta
+                x_cor = x_err * math.cos(bot_real_theta) - y_err * math.sin(bot_real_theta)
+                y_cor = x_err  * math.sin(bot_real_theta) + y_err  * math.cos(bot_real_theta)
+
+                v_x = hb_controller.Kp * x_cor
+                v_y = hb_controller.Kp * y_cor
+                w = (hb_controller.Kp + 0.5)*theta_err
+
+                # print the values, for debugging purpose
+                # if DEBUG:
+                #     print("Goal:", x_goal, y_goal, theta_goal, self.flag)
+                #     print("Bot Pos:", self.hb_x, self.hb_y, self.hb_theta)
+                #     print("Error:", x_err, y_err, theta_err)
+                #     print("Speed:", v_x, v_y, w)
+                #     print()
+
+                hb_controller.inverse_kinematics(v_x, v_y, w)
+
+                # Apply appropriate force vectors
+                #Create the messages and publish the data:
+                msg1 = Wrench()
+                msg1.force.y = hb_controller.v1
+                hb_controller.v1_publisher.publish(msg1)
+
+                msg2 = Wrench()
+                msg2.force.y = hb_controller.v2
+                hb_controller.v2_publisher.publish(msg2)
+
+                msg3 = Wrench()
+                msg3.force.y = hb_controller .v3
+                hb_controller.v3_publisher.publish(msg3)
+
+                goal_error = math.sqrt(x_err**2 + y_err**2)
+                if goal_error < 5:
+                    hb_controller.get_logger().info(f'Reached Goal: x:{x_goal}, y:{y_goal}, theta:{theta_goal}\n')
+                    ############     DO NOT MODIFY THIS       #########
+                    hb_controller.index += 1
+                    if hb_controller.flag == 1 :
+                        hb_controller.index = 0
+                    # hb_controller.send_request(hb_controller.index)
+                    ####################################################
 
         # Spin once to process callbacks
-    rclpy.spin(hb_controller)
+        rclpy.spin_once(hb_controller)
     
     # Destroy the node and shut down ROS
     hb_controller.destroy_node()
