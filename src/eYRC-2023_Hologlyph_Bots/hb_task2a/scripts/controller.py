@@ -121,8 +121,8 @@ class HBController(Node):
         # values = [self.hb_x, self.hb_y, self.hb_theta]
 
         # For testing purpose we are trying to make a square
-        x_goal = [4, -4, -4, 4, 0][self.index]
-        y_goal = [4, 4, -4, -4, 0][self.index]
+        x_goal = [250, 300, 300, 250][self.index]
+        y_goal = [200, 200, 250, 250][self.index]
         theta_goal  = [0, math.pi/2, -math.pi, -math.pi/2, 0][self.index]
         self.flag = self.index == 4
 
