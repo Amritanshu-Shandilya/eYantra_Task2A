@@ -1,8 +1,8 @@
 from setuptools import find_packages, setup
 import os
 from glob import glob
+package_name = 'hb_task2b'
 
-package_name = 'hb_task2a'
 
 setup(
     name=package_name,
@@ -25,7 +25,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'feedback = hb_task2a.feedback:main'
+             'controller = hb_task2b.bot_controller:main',
+             'nextgoalpub= hb_task2b.nextGoalPub:main'
+
          ],
     },
 )

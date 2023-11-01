@@ -44,18 +44,6 @@ class ServiceNode(Node):
         x = self.shape_list[1][0][(request.request_goal-1)]
         y = self.shape_list[1][1][(request.request_goal-1)]
         
-        plt.plot(x, y, marker='o', linestyle='-', color='b', label='Data Points')
-        print(x,y)
-        self.x_values.append(x)
-        self.y_values.append(y)
-        self.count += 1
-        if self.count == 90:
-            plt.xlabel('X-axis Label')
-            plt.ylabel('Y-axis Label')
-            plt.title('Plot of X and Y')
-            plt.legend()  # Show legend based on the 'label' parameter in plt.plot()
-            plt.show()
-
         msg.data = self.shape_list[0]
         self.publish_shape.publish(msg)
         
@@ -74,7 +62,7 @@ def generate_random_value(min_value=1, max_value=5):
     return random.randint(min_value, max_value)
 
 
-def generate_hexagon(side_length=5, x_center=0, y_center=0, theta=0, num_points=100):
+def generate_hexagon(side_length=100, x_center=0, y_center=0, theta=0, num_points=50):
     angles = np.linspace(0, 2 * np.pi, 6, endpoint=False) + theta
     x_vertices = x_center + side_length * np.cos(angles)
     y_vertices = y_center + side_length * np.sin(angles)
@@ -89,7 +77,7 @@ def generate_hexagon(side_length=5, x_center=0, y_center=0, theta=0, num_points=
     
     return x_interp.tolist(), y_interp.tolist(), theta
 
-def generate_rectangle(width=6, height=4, x_center=0, y_center=0, theta=0, num_points=100):
+def generate_rectangle(width=100, height=50, x_center=0, y_center=0, theta=0, num_points=50):
     half_width = width / 2
     half_height = height / 2
     
@@ -111,7 +99,7 @@ def generate_rectangle(width=6, height=4, x_center=0, y_center=0, theta=0, num_p
     
     return x.tolist(), y.tolist(), theta
 
-def generate_triangle(side_length=6, x_center=0, y_center=0, theta=0, num_points=100):
+def generate_triangle(side_length=100, x_center=0, y_center=0, theta=0, num_points=50):
     # Calculate the height of the equilateral triangle
     height = (np.sqrt(3) / 2) * side_length
     
@@ -141,7 +129,7 @@ def generate_triangle(side_length=6, x_center=0, y_center=0, theta=0, num_points
     
     return x.tolist(), y.tolist(), theta
 
-def generate_square(side_length=5, x_center=0, y_center=0, theta=0, num_points=100):
+def generate_square(side_length=100, x_center=0, y_center=0, theta=0, num_points=50):
     half_length = side_length / 2
     
     # Define the vertices of the square
@@ -172,7 +160,7 @@ def generate_square(side_length=5, x_center=0, y_center=0, theta=0, num_points=1
     
     return x.tolist(), y.tolist(), theta
 
-def generate_decagon(side_length=5, x_center=0, y_center=0, theta=0, num_points=100):
+def generate_decagon(side_length=100, x_center=0, y_center=0, theta=0, num_points=50):
     angles = np.linspace(0, 2 * np.pi, 10, endpoint=False) + theta
     x_vertices = x_center + side_length * np.cos(angles)
     y_vertices = y_center + side_length * np.sin(angles)
