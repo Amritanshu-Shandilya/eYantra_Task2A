@@ -95,12 +95,13 @@ class HBController(Node):
         self.timer = self.create_timer(0.5, self.inverse_kinematics)
 
         
-        self.Kp = 1
+        self.Kp = 1.5
 
         # client for the "next_goal" service
         # self.cli = self.create_client(NextGoal, 'next_goal')      
         # self.req = NextGoal.Request() 
         self.index = 0
+        self.flag = 0
 
 
     def aruco_detect_callback(self, msg):
@@ -121,10 +122,12 @@ class HBController(Node):
         # values = [self.hb_x, self.hb_y, self.hb_theta]
 
         # For testing purpose we are trying to make a square
-        x_goal = [250, 300, 300, 250][self.index]
-        y_goal = [200, 200, 250, 250][self.index]
-        theta_goal  = [0, math.pi/2, -math.pi, -math.pi/2, 0][self.index]
-        self.flag = self.index == 4
+        x_goal = [100, 400, 400, 100, 250][self.index]
+        y_goal = [100, 100, 400, 400, 250][self.index]
+        # theta_goal  = [0, math.pi/2, -math.pi, -math.pi/2, 0][self.index]
+        theta_goal  = [0, 0, 0, 0, 0][self.index]
+        if self.index == 4:
+            self.flag = 1
 
         # Finding error nd applying P-controller
         x_err = x_goal - self.hb_x
@@ -177,11 +180,12 @@ class HBController(Node):
 
         # this if below let the index increment only if you reach the desired goal
         goal_error = math.sqrt(x_err**2 + y_err**2)
-        if goal_error < 0.1 and abs(theta_err) < 0.1:
+        if goal_error < 5:
             self.get_logger().info(f'Reached Goal: x:{x_goal}, y:{y_goal}, theta:{theta_goal}\n')
             self.index += 1
             if self.flag == 1 :
                 self.index = 0
+                self.flag = 0
     # hb_controller.send_request(hb_controller.index)
 
 
