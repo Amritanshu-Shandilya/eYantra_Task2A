@@ -45,6 +45,7 @@ from geometry_msgs.msg import Pose2D
            
 ##############################################################
 
+
 ################# ADD UTILITY FUNCTIONS HERE #################
 
 
@@ -115,6 +116,7 @@ class HBController(Node):
         self.future = self.cli.call_async(self.req)
         
 
+
     def inverse_kinematics(self, v_x, v_y, w):
         # Passing this values in as a 3*1 matrix for multiplication with the matrix declated at the top
         values = [v_x, v_y, w]
@@ -128,7 +130,6 @@ class HBController(Node):
         self.v1 = result[0][0]
         self.v2 = result[1][0]
         self.v3 = result[2][0]
-
 
 
 def main(args=None):
