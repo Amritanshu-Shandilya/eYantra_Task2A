@@ -1,0 +1,5 @@
+#!/bin/bash
+source ./install/setup.bash
+ros2 launch hb_task2a task2a.launch.py &
+python3 src/eYRC-2023_Hologlyph_Bots/hb_task2a/scripts/feedback.py &
+python3 src/eYRC-2023_Hologlyph_Bots/hb_task2a/scripts/service_node.py
