@@ -128,6 +128,8 @@ class ArUcoDetector(Node):
         cv2.waitKey(1)
 
     def bot_pos_publish(self):
+        if self.bot_x == self.bot_y == self.bot_theeta is None:
+            return
         msg = Pose2D()
         msg.x = self.bot_x
         msg.y = self.bot_y
