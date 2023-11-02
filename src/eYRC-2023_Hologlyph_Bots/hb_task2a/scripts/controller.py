@@ -65,7 +65,7 @@ class HBController(Node):
         super().__init__('hb_controller')
         
         # Initialze Subscriber
-        self.aruco_subscriber = self.create_subscription(Pose2D,'/hb_bot_1/detect_aruco',self.aruco_detect_callback, 10)
+        self.aruco_subscriber = self.create_subscription(Pose2D,'/detect_aruco',self.aruco_detect_callback, 10)
 
 	    #	Use the below given topics to generate motion for the robot.
         #   /hb_bot_1/left_wheel_force,

@@ -72,7 +72,7 @@ class ArUcoDetector(Node):
         # Subscribe the topic /camera/image_raw
         self.r_image_subscriber = self.create_subscription(Image, '/camera/image_raw', self.image_callback, 1)
         # Publish to topic /aruco_detection
-        self.ad_publisher = self.create_publisher(Pose2D,'/hb_bot_1/detect_aruco',10)
+        self.ad_publisher = self.create_publisher(Pose2D,'/detect_aruco',10)
 
         # For maintaining control loop rate.
         self.rate = self.create_rate(100)
