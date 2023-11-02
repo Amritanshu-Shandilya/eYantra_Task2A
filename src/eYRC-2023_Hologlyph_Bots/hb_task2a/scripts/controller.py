@@ -95,7 +95,7 @@ class HBController(Node):
         self.rate = self.create_rate(100)
 
         
-        self.Kp = 2
+        self.Kp = 3
 
         # client for the "next_goal" service
         self.cli = self.create_client(NextGoal, 'next_goal')      
@@ -127,9 +127,9 @@ class HBController(Node):
         result = np.matmul(matrix, chassis_vel)
         
         #storing these velocities in the global variables
-        self.v1 = result[0][0]
-        self.v2 = result[1][0]
-        self.v3 = result[2][0]
+        self.v1 = result[0][0] * 2
+        self.v2 = result[1][0] * 2
+        self.v3 = result[2][0] * 2
 
 
 def main(args=None):
@@ -172,6 +172,8 @@ def main(args=None):
                 x_err = x_goal - hb_controller.hb_x
                 y_err = y_goal - hb_controller.hb_y
                 theta_err = theta_goal - hb_controller.hb_theta
+                # theta_err = 0
+
 
                 # Frame changing using Rotation matrix
                 bot_real_theta = -hb_controller.hb_theta
@@ -186,8 +188,9 @@ def main(args=None):
                 if DEBUG:
                     print("Goal:", x_goal, y_goal, theta_goal, hb_controller.flag)
                     print("Bot Pos:", hb_controller.hb_x, hb_controller.hb_y, hb_controller.hb_theta)
-                    print("Error:", x_err, y_err, theta_err)
-                    print("Speed:", v_x, v_y, w)
+                    # print("Error:", x_err, y_err, theta_err)
+                    print("Goal Error: ", (math.sqrt(x_err**2 + y_err**2)))
+                    # print("Speed:", v_x, v_y, w)
                     print()
 
                 hb_controller.inverse_kinematics(v_x, v_y, w)
@@ -202,8 +205,10 @@ def main(args=None):
                 hb_controller.v3_publisher.publish(msg3)
 
                 goal_error = math.sqrt(x_err**2 + y_err**2)
-                if goal_error < 5:
+                threshold = 2
+                if goal_error < threshold:
                     hb_controller.get_logger().info(f'Reached Goal: x:{x_goal}, y:{y_goal}, theta:{theta_goal}\n')
+                    hb_controller.inverse_kinematics(0, 0, 0)
                     ############     DO NOT MODIFY THIS       #########
                     hb_controller.index += 1
                     if hb_controller.flag == 1 :
