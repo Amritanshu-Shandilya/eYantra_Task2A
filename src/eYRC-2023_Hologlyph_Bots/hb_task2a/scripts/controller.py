@@ -95,7 +95,7 @@ class HBController(Node):
         self.rate = self.create_rate(100)
 
         
-        self.Kp = 1
+        self.Kp = 2
 
         # client for the "next_goal" service
         self.cli = self.create_client(NextGoal, 'next_goal')      
@@ -164,6 +164,9 @@ def main(args=None):
                 # y_goal = [100, 100, 400, 400, 250][hb_controller.index]
                 # theta_goal  = [0, 0, 0, 0, 0][hb_controller.index]
                 # hb_controller.flag = hb_controller.index == 4
+
+                x_goal = 250 + x_goal
+                y_goal = 250 - y_goal
 
                 # Finding error nd applying P-controller
                 x_err = x_goal - hb_controller.hb_x
