@@ -95,7 +95,7 @@ class HBController(Node):
         self.rate = self.create_rate(100)
 
         
-        self.Kp = 3
+        self.Kp = 1
 
         # client for the "next_goal" service
         self.cli = self.create_client(NextGoal, 'next_goal')      
@@ -172,7 +172,7 @@ def main(args=None):
                 x_err = x_goal - hb_controller.hb_x
                 y_err = y_goal - hb_controller.hb_y
                 theta_err = theta_goal - hb_controller.hb_theta
-                # theta_err = 0
+                
 
 
                 # Frame changing using Rotation matrix
