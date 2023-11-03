@@ -198,7 +198,7 @@ def main(args=None):
                 # Apply appropriate force vectors
                 #Create the messages and publish the data:
                 msg1, msg2, msg3 = Wrench(), Wrench(), Wrench()
-                msg1.force.y, msg2.force.y, msg2.force.y = hb_controller.v1, hb_controller.v2, hb_controller.v2
+                msg1.force.y, msg2.force.y, msg2.force.y = hb_controller.v1, hb_controller.v2, hb_controller.v3
 
                 hb_controller.v1_publisher.publish(msg1)
                 hb_controller.v2_publisher.publish(msg2)
