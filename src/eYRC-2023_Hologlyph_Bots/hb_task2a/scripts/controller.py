@@ -95,7 +95,7 @@ class HBController(Node):
         self.rate = self.create_rate(100)
 
         
-        self.Kp = 2
+        self.Kp = 4
 
         # client for the "next_goal" service
         self.cli = self.create_client(NextGoal, 'next_goal')      
@@ -158,6 +158,8 @@ def main(args=None):
                 y_goal      = response.y_goal
                 theta_goal  = response.theta_goal
                 hb_controller.flag = response.end_of_list
+                x_goal = 250 + x_goal
+                y_goal = 250 - y_goal
                 ####################################################
 
                 # x_goal = [100, 400, 400, 100, 250][hb_controller.index]
@@ -165,8 +167,6 @@ def main(args=None):
                 # theta_goal  = [0, 0, 0, 0, 0][hb_controller.index]
                 # hb_controller.flag = hb_controller.index == 4
 
-                x_goal = 250 + x_goal
-                y_goal = 250 - y_goal
 
                 # Finding error nd applying P-controller
                 x_err = x_goal - hb_controller.hb_x
@@ -182,27 +182,30 @@ def main(args=None):
                 v_y = hb_controller.Kp * y_cor
                 w = (hb_controller.Kp + 0.5)*theta_err
 
-                # print the values, for debugging purpose
-                if DEBUG:
-                    print("Goal:", x_goal, y_goal, theta_goal, hb_controller.flag)
-                    print("Bot Pos:", hb_controller.hb_x, hb_controller.hb_y, hb_controller.hb_theta)
-                    print("Error:", x_err, y_err, theta_err)
-                    print("Speed:", v_x, v_y, w)
-                    print()
 
                 hb_controller.inverse_kinematics(v_x, v_y, w)
 
                 # Apply appropriate force vectors
                 #Create the messages and publish the data:
                 msg1, msg2, msg3 = Wrench(), Wrench(), Wrench()
-                msg1.force.y, msg2.force.y, msg2.force.y = hb_controller.v1, hb_controller.v2, hb_controller.v2
+                msg1.force.y, msg2.force.y, msg3.force.y = hb_controller.v1, hb_controller.v2, hb_controller.v3
+
+                # print the values, for debugging purpose
+                if DEBUG:
+                    print("NextGoal:", response.x_goal, response.y_goal, response.theta_goal)
+                    print("Goal:", x_goal, y_goal, theta_goal, hb_controller.flag)
+                    print("Bot Pos:", hb_controller.hb_x, hb_controller.hb_y, hb_controller.hb_theta)
+                    print("Error:", x_err, y_err, theta_err)
+                    print("Speed:", v_x, v_y, w)
+                    print("Wheel Speed:", msg1.force.y, msg2.force.y, msg3.force.y )
+                    print()
 
                 hb_controller.v1_publisher.publish(msg1)
                 hb_controller.v2_publisher.publish(msg2)
                 hb_controller.v3_publisher.publish(msg3)
 
                 goal_error = math.sqrt(x_err**2 + y_err**2)
-                if goal_error < 5:
+                if goal_error < 2:
                     hb_controller.get_logger().info(f'Reached Goal: x:{x_goal}, y:{y_goal}, theta:{theta_goal}\n')
                     ############     DO NOT MODIFY THIS       #########
                     hb_controller.index += 1
