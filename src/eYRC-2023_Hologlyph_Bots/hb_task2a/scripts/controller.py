@@ -20,10 +20,11 @@
 
 # Team ID:		2883
 # Author List:	Anurag, Amritanshu, Saumitra, Ansh
-# Filename:		feedback.py
+# Filename:		controller.py
 # Functions:
-#			[ Comma separated list of functions in this file ]
-# Nodes:		Add your publishing and subscribing node
+#			[aruco_detect_callback, send_request, send_request, inverse_kinematics]
+# Nodes:		Publishers : v1_publisher, v2_publisher, v3_publisher
+#               Subscriber : aruco_subscriber
 
 
 ################### IMPORT MODULES #######################
