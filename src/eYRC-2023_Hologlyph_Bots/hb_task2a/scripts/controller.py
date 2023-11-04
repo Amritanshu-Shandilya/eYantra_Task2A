@@ -20,10 +20,11 @@
 
 # Team ID:		2883
 # Author List:	Anurag, Amritanshu, Saumitra, Ansh
-# Filename:		feedback.py
+# Filename:		controller.py
 # Functions:
-#			[ Comma separated list of functions in this file ]
-# Nodes:		Add your publishing and subscribing node
+#			[aruco_detect_callback, send_request, send_request, inverse_kinematics]
+# Nodes:		Publishers : v1_publisher, v2_publisher, v3_publisher
+#               Subscriber : aruco_subscriber
 
 
 ################### IMPORT MODULES #######################
@@ -127,9 +128,9 @@ class HBController(Node):
         result = np.matmul(matrix, chassis_vel)
         
         #storing these velocities in the global variables
-        self.v1 = result[0][0]
-        self.v2 = result[1][0]
-        self.v3 = result[2][0]
+        self.v1 = result[0][0] * 2
+        self.v2 = result[1][0] * 2
+        self.v3 = result[2][0] * 2
 
 
 def main(args=None):
@@ -172,6 +173,8 @@ def main(args=None):
                 x_err = x_goal - hb_controller.hb_x
                 y_err = y_goal - hb_controller.hb_y
                 theta_err = theta_goal - hb_controller.hb_theta
+                
+
 
                 # Frame changing using Rotation matrix
                 bot_real_theta = -hb_controller.hb_theta
@@ -200,6 +203,13 @@ def main(args=None):
                     print("Wheel Speed:", msg1.force.y, msg2.force.y, msg3.force.y )
                     print()
 
+                hb_controller.inverse_kinematics(v_x, v_y, w)
+
+                # Apply appropriate force vectors
+                #Create the messages and publish the data:
+                msg1, msg2, msg3 = Wrench(), Wrench(), Wrench()
+                msg1.force.y, msg2.force.y, msg3.force.y = hb_controller.v1, hb_controller.v2, hb_controller.v3
+
                 hb_controller.v1_publisher.publish(msg1)
                 hb_controller.v2_publisher.publish(msg2)
                 hb_controller.v3_publisher.publish(msg3)
@@ -207,6 +217,7 @@ def main(args=None):
                 goal_error = math.sqrt(x_err**2 + y_err**2)
                 if goal_error < 2:
                     hb_controller.get_logger().info(f'Reached Goal: x:{x_goal}, y:{y_goal}, theta:{theta_goal}\n')
+                    hb_controller.inverse_kinematics(0, 0, 0)
                     ############     DO NOT MODIFY THIS       #########
                     hb_controller.index += 1
                     if hb_controller.flag == 1 :
