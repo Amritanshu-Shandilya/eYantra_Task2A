@@ -55,71 +55,56 @@ class HBController(Node):
         # NOTE: You are strictly NOT-ALLOWED to use "cmd_vel" or "odom" topics in this task
 
         # Bot 1 publishers:
-        self.bot1_v1_publisher = self.create_publisher(Wrench,'/hb_b1/left_wheel_force',1)
-        self.bot1_v2_publisher = self.create_publisher(Wrench,'/hb_b1/right_wheel_force',1)
-        self.bot1_v3_publisher =self.create_publisher(Wrench,'/hb_b1/rear_wheel_force',1)
+        self.bot1_v1_publisher = self.create_publisher(Wrench,'/hb_bot_1/left_wheel_force',1)
+        self.bot1_v2_publisher = self.create_publisher(Wrench,'/hb_bot_1/right_wheel_force',1)
+        self.bot1_v3_publisher =self.create_publisher(Wrench,'/hb_bot_1/rear_wheel_force',1)
 
         # Bot 2 publishers:
-        self.bot2_v1_publisher = self.create_publisher(Wrench,'/hb_b2/left_wheel_force',1)
-        self.bot2_v2_publisher = self.create_publisher(Wrench,'/hb_b2/right_wheel_force',1)
-        self.bot2_v3_publisher =self.create_publisher(Wrench,'/hb_b2/rear_wheel_force',1)
+        self.bot2_v1_publisher = self.create_publisher(Wrench,'/hb_bot_2/left_wheel_force',1)
+        self.bot2_v2_publisher = self.create_publisher(Wrench,'/hb_bot_2/right_wheel_force',1)
+        self.bot2_v3_publisher =self.create_publisher(Wrench,'/hb_bot_2/rear_wheel_force',1)
 
         # Bot 3 publishers:  
-        self.bot3_v1_publisher = self.create_publisher(Wrench,'/hb_b3/left_wheel_force',1)
-        self.bot3_v2_publisher = self.create_publisher(Wrench,'/hb_b3/right_wheel_force',1)
-        self.bot3_v3_publisher =self.create_publisher(Wrench,'/hb_b3/rear_wheel_force',1)
+        self.bot3_v1_publisher = self.create_publisher(Wrench,'/hb_bot_3/left_wheel_force',1)
+        self.bot3_v2_publisher = self.create_publisher(Wrench,'/hb_bot_3/right_wheel_force',1)
+        self.bot3_v3_publisher =self.create_publisher(Wrench,'/hb_bot_3/rear_wheel_force',1)
 
-	    
-        # VARIABLES TO HOLD POSITIONS
+	    # Initialise the required variables
+
         # Bot 1:
-        self.b1_x = 0.0
-        self.b1_y = 0.0
-        self.b1_theta = 0.0
+        self.bot_1_x = 0.0
+        self.bot_1_y = 0.0
+        self.bot_1_theta = 0.0
 
         # Bot 2:
-        self.b2_x = 0.0
-        self.b2_y = 0.0
-        self.b2_theta = 0.0
+        self.bot_2_x = 0.0
+        self.bot_2_y = 0.0
+        self.bot_2_theta = 0.0
 
         # Bot 3:
-        self.b3_x = 0.0
-        self.b3_y = 0.0
-        self.b3_theta = 0.0
+        self.bot_3_x = 0.0
+        self.bot_3_y = 0.0
+        self.bot_3_theta = 0.0
 
-        # VARIABLES TO HOLD WHEEL VELOCITIES
-        # Bot 1:
-        self.b1_v1 = 0.0
-        self.b1_v2 = 0.0
-        self.b1_v3 = 0.0
 
-        # Bot 2:
-        self.b2_v1 = 0.0
-        self.b2_v2 = 0.0
-        self.b2_v3 = 0.0
-
-        # Bot 3:
-        self.b3_v1 = 0.0
-        self.b3_v2 = 0.0
-        self.b3_v3 = 0.0
-
-        #SUBSCRIBERS
+        #Similar to this you can create subscribers for hb_bot_2 and hb_bot_3
         self.bot1_subscription = self.create_subscription(
             Goal,  
-            'hb_b1/goal',  
+            'hb_bot_1/goal',  
             self.Bot1_CallBack,  # Callback function to handle received messages
             10  # QoS profile, here it's 10 which means a buffer size of 10 messages
         )  
 
         self.bot2_subscription = self.create_subscription(
             Goal,  
-            'hb_b2/goal',  
+            'hb_bot_2/goal',  
             self.Bot2_CallBack,  # Callback function to handle received messages
             10  # QoS profile, here it's 10 which means a buffer size of 10 messages
         ) 
 
         self.bot3_subscription = self.create_subscription(
             Goal,  
-            'hb_b3/goal',  
+            'hb_bot_3/goal',  
             self.Bot3_CallBack,  # Callback function to handle received messages
             10  # QoS profile, here it's 10 which means a buffer size of 10 messages
         ) 
@@ -129,88 +114,34 @@ class HBController(Node):
         # For maintaining control loop rate.
         self.rate = self.create_rate(100)
 
-        #For Testing purpose
-        self.timer = self.create_timer(0.5, self.inverse_kinematics)
+        self.Kp = 4
+        self.index = 0
+        self.flag = 0
 
-        # P-controllers for each bot
-        self.Kp1 = 4
-        self.Kp2 = 4
-        self.Kp3 = 4
+    def inverse_kinematics():
+        ############ ADD YOUR CODE HERE ############
 
-        # Indices for each bot
-        self.index1 = 0
-        self.index2 = 0
-        self.index3 = 0
-
-        # Flags for each bot
-        self.flag1 = 0
-        self.flag2 = 0
-        self.flag3 = 0
-
-    def inverse_kinematics(self):
-        # goals
-        bot1_x_goal =[175, 125, 125, 175][self.index1]
-        bot1_y_goal = [50, 50, 100, 100 ][self.index1]
-        bot1_theta_goal = [0, math.pi/2, -math.pi, -math.pi/2, 0][self.index1]
-
-        bot2_x_goal =[200, 175, 175, 125, 225][self.index2]
-        bot2_y_goal = [400, 400, 350, 350, 400][self.index2]
-        bot2_theta_goal = [0, math.pi/2, -math.pi, -math.pi/2, 0][self.index2]
-
-        bot3_x_goal =[300, 350, 350, 300][self.index3]
-        bot3_y_goal = [50, 50, 100, 100][self.index3]
-        bot3_theta_goal = [0, math.pi/2, -math.pi, -math.pi/2, 0][self.index3]
-
-        # CALCULATION FOR BOT 1
-        bot1_pos = [self.b1_x, self.b1_y, self.b1_theta]
-        # Finding errors
-        b1_x_err = bot1_x_goal - self.b1_x
-        b1_y_err = bot1_y_goal - self.b1_y
-        b1_theta_err = bot1_theta_goal - self.b1_theta
-
-        # Frame changing using rotation matrix
-        bot1_real_theta = -self.hb_theta
-        b1_x_cor = b1_x_err * math.cos(bot1_real_theta) - b1_y_err * math.sin(bot1_real_theta)
-        b1_y_cor = b1_x_err  * math.sin(bot1_real_theta) + b1_y_err  * math.cos(bot1_real_theta)
-
-        # Finding velocities
-        b1_v_x = self.Kp * b1_x_cor
-        b1_v_y = self.Kp * b1_y_cor
-        b1_w = (self.Kp + 0.5)*b1_theta_err
-
-        values = [b1_v_x, b1_v_y, b1_w]
-        # Reshaping it into 3*1 for Inverse Kinematics calculations
-        m = np.array(values)
-        b1_chassis_vel = m.reshape(3,1)
-
-        
-        result1 = np.matmul(matrix, b1_chassis_vel) # Actual Inverse Kinematic multiplication
-
-        # Assigning the wheel velocities
-        self.b1_v1 = result1[0][0]
-        self.b1_v2 = result1[1][0]
-        self.b1_v3 = result1[2][0]
-
-        #Store these velocities into messages
-
-
-
+        # INSTRUCTIONS & HELP : 
+        #	-> Use the target velocity you calculated for the robot in previous task, and
+        #	Process it further to find what proportions of that effort should be given to 3 individuals wheels !!
+        #	Publish the calculated efforts to actuate robot by applying force vectors on provided topics
+        ############################################
         pass
 
     def Bot1_CallBack(self, msg):
-        self.b1_x = msg.x
-        self.b1_y = msg.y
-        self.b1_theta = msg.theta
+        self.bot_1_x = msg.x
+        self.bot_1_y = msg.y
+        self.bot_1_theta = msg.theta
 
     def Bot2_CallBack(self, msg):
-        self.b2_x = msg.x
-        self.b2_y = msg.y
-        self.b2_theta = msg.theta
+        self.bot_2_x = msg.x
+        self.bot_2_y = msg.y
+        self.bot_2_theta = msg.theta
 
     def Bot3_CallBack(self, msg):
-        self.b3_x = msg.x
-        self.b3_y = msg.y
-        self.b3_theta = msg.theta
+        self.bot_3_x = msg.x
+        self.bot_3_y = msg.y
+        self.bot_3_theta = msg.theta
 
 def main(args=None):
     rclpy.init(args=args)
