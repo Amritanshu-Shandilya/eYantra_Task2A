@@ -95,8 +95,7 @@ class HBController(Node):
         # For maintaining control loop rate.
         self.rate = self.create_rate(100)
 
-        
-        self.Kp = 4
+        self.Kp = 5.5
 
         # client for the "next_goal" service
         self.cli = self.create_client(NextGoal, 'next_goal')      
@@ -159,8 +158,8 @@ def main(args=None):
                 y_goal      = response.y_goal
                 theta_goal  = response.theta_goal
                 hb_controller.flag = response.end_of_list
-                x_goal = 250 + x_goal
-                y_goal = 250 - y_goal
+                x_goal = x_goal + 250
+                y_goal = y_goal + 250
                 ####################################################
 
                 # x_goal = [100, 400, 400, 100, 250][hb_controller.index]
