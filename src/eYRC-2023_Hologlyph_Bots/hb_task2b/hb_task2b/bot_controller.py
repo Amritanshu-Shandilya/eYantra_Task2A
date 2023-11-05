@@ -34,7 +34,7 @@ import time
 import math
 import numpy as np
 from tf_transformations import euler_from_quaternion
-from my_robot_interfaces.msg import Goal  
+from my_robot_interfaces.msg import Goal 
 from geometry_msgs.msg import Wrench
 from geometry_msgs.msg import Pose2D 
 
@@ -55,36 +55,52 @@ class HBController(Node):
         # NOTE: You are strictly NOT-ALLOWED to use "cmd_vel" or "odom" topics in this task
 
         # Bot 1 publishers:
-        self.bot1_v1_publisher = self.create_publisher(Wrench,'/hb_bot_1/left_wheel_force',1)
-        self.bot1_v2_publisher = self.create_publisher(Wrench,'/hb_bot_1/right_wheel_force',1)
-        self.bot1_v3_publisher =self.create_publisher(Wrench,'/hb_bot_1/rear_wheel_force',1)
+        self.bot1_v1_publisher = self.create_publisher(Wrench,'/hb_bot_1/left_wheel_force',10)
+        self.bot1_v2_publisher = self.create_publisher(Wrench,'/hb_bot_1/right_wheel_force',10)
+        self.bot1_v3_publisher =self.create_publisher(Wrench,'/hb_bot_1/rear_wheel_force',10)
 
         # Bot 2 publishers:
-        self.bot2_v1_publisher = self.create_publisher(Wrench,'/hb_bot_2/left_wheel_force',1)
-        self.bot2_v2_publisher = self.create_publisher(Wrench,'/hb_bot_2/right_wheel_force',1)
-        self.bot2_v3_publisher =self.create_publisher(Wrench,'/hb_bot_2/rear_wheel_force',1)
+        self.bot2_v1_publisher = self.create_publisher(Wrench,'/hb_bot_2/left_wheel_force',10)
+        self.bot2_v2_publisher = self.create_publisher(Wrench,'/hb_bot_2/right_wheel_force',10)
+        self.bot2_v3_publisher =self.create_publisher(Wrench,'/hb_bot_2/rear_wheel_force',10)
 
         # Bot 3 publishers:  
-        self.bot3_v1_publisher = self.create_publisher(Wrench,'/hb_bot_3/left_wheel_force',1)
-        self.bot3_v2_publisher = self.create_publisher(Wrench,'/hb_bot_3/right_wheel_force',1)
-        self.bot3_v3_publisher =self.create_publisher(Wrench,'/hb_bot_3/rear_wheel_force',1)
+        self.bot3_v1_publisher = self.create_publisher(Wrench,'/hb_bot_3/left_wheel_force',10)
+        self.bot3_v2_publisher = self.create_publisher(Wrench,'/hb_bot_3/right_wheel_force',10)
+        self.bot3_v3_publisher =self.create_publisher(Wrench,'/hb_bot_3/rear_wheel_force',10)
 
 	    # Initialise the required variables
-
+        # FOR POSITIONS
         # Bot 1:
-        self.bot_1_x = 0.0
-        self.bot_1_y = 0.0
-        self.bot_1_theta = 0.0
+        self.b1_x = []
+        self.b1_y = []
+        self.b1_theta = 0.0
 
         # Bot 2:
-        self.bot_2_x = 0.0
-        self.bot_2_y = 0.0
-        self.bot_2_theta = 0.0
+        self.b2_x = []
+        self.b2_y = []
+        self.b2_theta = 0.0
 
         # Bot 3:
-        self.bot_3_x = 0.0
-        self.bot_3_y = 0.0
-        self.bot_3_theta = 0.0
+        self.b3_x = []
+        self.b3_y = []
+        self.b3_theta = 0.0
+
+        #FOR VELOCITIES
+        # Bot 1:
+        self.b1_v1 = 0.
+        self.b1_v2 = 0.
+        self.b1_v3 = 0.
+
+        # Bot 2:
+        self.b2_v1 = 0.
+        self.b2_v2 = 0.
+        self.b2_v3 = 0.
+        
+        # Bot 3:
+        self.b3_v1 = 0.
+        self.b3_v2 = 0.
+        self.b3_v3 = 0.
 
 
         #Similar to this you can create subscribers for hb_bot_2 and hb_bot_3
@@ -113,35 +129,83 @@ class HBController(Node):
 
         # For maintaining control loop rate.
         self.rate = self.create_rate(100)
+        self.timer = self.create_timer(0.5, self.inverse_kinematics)
 
-        self.Kp = 4
-        self.index = 0
-        self.flag = 0
 
-    def inverse_kinematics():
-        ############ ADD YOUR CODE HERE ############
+        self.Kp1 = 4
+        self.index1 = 0
+        self.flag1 = 0
 
-        # INSTRUCTIONS & HELP : 
-        #	-> Use the target velocity you calculated for the robot in previous task, and
-        #	Process it further to find what proportions of that effort should be given to 3 individuals wheels !!
-        #	Publish the calculated efforts to actuate robot by applying force vectors on provided topics
-        ############################################
-        pass
+    def inverse_kinematics(self):
+        ############ DEMO GOALS ############
+        b1_x_goal = [175, 125, 125, 175][self.index1]
+        b1_y_goal = [50, 50, 100, 100][self.index1]
+        b1_theta_goal = [0, math.pi/2, -math.pi, -math.pi/2, 0][self.index1]
+        self.flag1 = self.index1 == 4
+
+        ####################################
+
+        #Finding errors and applying p controllers
+        b1_x_err = b1_x_goal - self.b1_x
+        b1_y_err = b1_y_goal - self.b1_y
+        b1_theta_err = b1_theta_goal - self.b1_theta
+        
+        # Changing the frame using rotation matrix
+        b1_angle = -self.b1_theta
+        b1_x_cor = b1_x_err * math.cos(b1_angle) - b1_y_err * math.sin(b1_angle)
+        b1_y_cor = b1_x_err  * math.sin(b1_angle) + b1_y_err  * math.cos(b1_angle)
+
+        # P-controllers:
+        b1_vX = self.Kp1*b1_x_cor
+        b1_vY = self.Kp1*b1_y_cor
+        b1_w = (self.Kp1+0.5)*b1_theta_err
+
+        # Inverse Kinematics Part
+        m = np.array([b1_vX, b1_vY, b1_w])
+        b1_chassis_vel = m.reshape(3,1)
+        result = np.matmul(matrix, b1_chassis_vel)
+        
+        # Storing the velocities in the bot
+        self.b1_v1 = result[0][0]
+        self.b1_v2 = result[1][0]
+        self.b1_v3 = result[2][0]
+
+        # Creating messages
+        b1_msg1 = Wrench()
+        b1_msg1.force.y = self.b1_v1
+        self.bot1_v1_publisher.publish(b1_msg1)
+
+        b1_msg2 = Wrench()
+        b1_msg2.force.y = self.b1_v2
+        self.bot1_v1_publisher.publish(b1_msg2)
+
+        b1_msg3 = Wrench()
+        b1_msg3.force.y = self.b1_v3
+        self.bot1_v1_publisher.publish(b1_msg3)
+
+        # this if below let the index increment only if you reach the desired goal
+        goal_error = math.sqrt(b1_x_err**2 + b1_y_err**2)
+        if goal_error < 0.1 and abs(b1_theta_err) < 2:
+            self.get_logger().info(f'Reached Goal: x:{b1_x_goal}, y:{b1_y_goal}, theta:{b1_theta_goal}\n')
+            self.index1 += 1
+            if self.flag1 == 1 :
+                self.index1 = 0
+
 
     def Bot1_CallBack(self, msg):
-        self.bot_1_x = msg.x
-        self.bot_1_y = msg.y
-        self.bot_1_theta = msg.theta
+        self.b1_x = msg.x
+        self.b1_y = msg.y
+        self.b1_theta = msg.theta
 
     def Bot2_CallBack(self, msg):
-        self.bot_2_x = msg.x
-        self.bot_2_y = msg.y
-        self.bot_2_theta = msg.theta
+        self.b2_x = msg.x
+        self.b2_y = msg.y
+        self.b2_theta = msg.theta
 
     def Bot3_CallBack(self, msg):
-        self.bot_3_x = msg.x
-        self.bot_3_y = msg.y
-        self.bot_3_theta = msg.theta
+        self.b3_x = msg.x
+        self.b3_y = msg.y
+        self.b3_theta = msg.theta
 
 def main(args=None):
     rclpy.init(args=args)
