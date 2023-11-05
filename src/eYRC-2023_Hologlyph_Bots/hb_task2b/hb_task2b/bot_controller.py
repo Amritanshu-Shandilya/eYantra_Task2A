@@ -18,9 +18,9 @@
 '''
 
 
-# Team ID:		2883
-# Author List:		Amritanshu, Anurag, Saumitra, Ansh
-# Filename:		bot_controller.py
+# Team ID:		[ Team-ID ]
+# Author List:		[ Names of team members worked on this file separated by Comma: Name1, Name2, ... ]
+# Filename:		feedback.py
 # Functions:
 #			[ Comma separated list of functions in this file ]
 # Nodes:		Add your publishing and subscribing node
