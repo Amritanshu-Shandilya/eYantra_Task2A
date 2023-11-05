@@ -18,9 +18,9 @@
 '''
 
 
-# Team ID:		2883
-# Author List:  Amritanshu, Anurag, Saumitra, Ansh
-# Filename:		bot_controller.py
+# Team ID:		[ Team-ID ]
+# Author List:		[ Names of team members worked on this file separated by Comma: Name1, Name2, ... ]
+# Filename:		feedback.py
 # Functions:
 #			[ Comma separated list of functions in this file ]
 # Nodes:		Add your publishing and subscribing node
@@ -32,91 +32,39 @@ import rclpy
 from rclpy.node import Node
 import time
 import math
-import numpy as np
 from tf_transformations import euler_from_quaternion
-from my_robot_interfaces.msg import Goal  
-from geometry_msgs.msg import Wrench
-from geometry_msgs.msg import Pose2D 
-
-# Matrix used for Inverse Kinematics
-values = [-0.33, 0.58, 0.33, -0.33, -0.58, 0.33, 0.67, 0, 0.33]
-    #Create a 3x3 numpy matrix out of this list
-matrix = np.array(values)
-matrix = matrix.reshape(3,3)
-
-DEBUG = True
+from my_robot_interfaces.msg import Goal             
 
 
 class HBController(Node):
     def __init__(self):
         super().__init__('hb_controller')
         
-        # Initialze Publisher and Subscriber
-        # NOTE: You are strictly NOT-ALLOWED to use "cmd_vel" or "odom" topics in this task
 
-        # Bot 1 publishers:
-        self.bot1_v1_publisher = self.create_publisher(Wrench,'/hb_bot_1/left_wheel_force',1)
-        self.bot1_v2_publisher = self.create_publisher(Wrench,'/hb_bot_1/right_wheel_force',1)
-        self.bot1_v3_publisher =self.create_publisher(Wrench,'/hb_bot_1/rear_wheel_force',1)
-
-        # Bot 2 publishers:
-        self.bot2_v1_publisher = self.create_publisher(Wrench,'/hb_bot_2/left_wheel_force',1)
-        self.bot2_v2_publisher = self.create_publisher(Wrench,'/hb_bot_2/right_wheel_force',1)
-        self.bot2_v3_publisher =self.create_publisher(Wrench,'/hb_bot_2/rear_wheel_force',1)
-
-        # Bot 3 publishers:  
-        self.bot3_v1_publisher = self.create_publisher(Wrench,'/hb_bot_3/left_wheel_force',1)
-        self.bot3_v2_publisher = self.create_publisher(Wrench,'/hb_bot_3/right_wheel_force',1)
-        self.bot3_v3_publisher =self.create_publisher(Wrench,'/hb_bot_3/rear_wheel_force',1)
-
-	    # Initialise the required variables
-
-        # Bot 1:
-        self.bot_1_x = 0.0
-        self.bot_1_y = 0.0
+        # Initialise the required variables
+        self.bot_1_x = []
+        self.bot_1_y = []
         self.bot_1_theta = 0.0
 
-        # Bot 2:
-        self.bot_2_x = 0.0
-        self.bot_2_y = 0.0
-        self.bot_2_theta = 0.0
-
-        # Bot 3:
-        self.bot_3_x = 0.0
-        self.bot_3_y = 0.0
-        self.bot_3_theta = 0.0
-
+        # Initialze Publisher and Subscriber
+        # NOTE: You are strictly NOT-ALLOWED to use "cmd_vel" or "odom" topics in this task
+	    #	Use the below given topics to generate motion for the robot.
+	    #   /hb_bot_1/left_wheel_force,
+	    #   /hb_bot_1/right_wheel_force,
+	    #   /hb_bot_1/left_wheel_force
 
         #Similar to this you can create subscribers for hb_bot_2 and hb_bot_3
-        self.bot1_subscription = self.create_subscription(
+        self.subscription = self.create_subscription(
             Goal,  
             'hb_bot_1/goal',  
-            self.Bot1_CallBack,  # Callback function to handle received messages
+            self.goalCallBack,  # Callback function to handle received messages
             10  # QoS profile, here it's 10 which means a buffer size of 10 messages
         )  
-
-        self.bot2_subscription = self.create_subscription(
-            Goal,  
-            'hb_bot_2/goal',  
-            self.Bot2_CallBack,  # Callback function to handle received messages
-            10  # QoS profile, here it's 10 which means a buffer size of 10 messages
-        ) 
-
-        self.bot3_subscription = self.create_subscription(
-            Goal,  
-            'hb_bot_3/goal',  
-            self.Bot3_CallBack,  # Callback function to handle received messages
-            10  # QoS profile, here it's 10 which means a buffer size of 10 messages
-        ) 
 
         self.subscription  # Prevent unused variable warning
 
         # For maintaining control loop rate.
         self.rate = self.create_rate(100)
-
-        self.Kp = 4
-        self.index = 0
-        self.flag = 0
 
     def inverse_kinematics():
         ############ ADD YOUR CODE HERE ############
@@ -128,20 +76,10 @@ class HBController(Node):
         ############################################
         pass
 
-    def Bot1_CallBack(self, msg):
+    def goalCallBack(self, msg):
         self.bot_1_x = msg.x
         self.bot_1_y = msg.y
         self.bot_1_theta = msg.theta
-
-    def Bot2_CallBack(self, msg):
-        self.bot_2_x = msg.x
-        self.bot_2_y = msg.y
-        self.bot_2_theta = msg.theta
-
-    def Bot3_CallBack(self, msg):
-        self.bot_3_x = msg.x
-        self.bot_3_y = msg.y
-        self.bot_3_theta = msg.theta
 
 def main(args=None):
     rclpy.init(args=args)
